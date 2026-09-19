@@ -1,0 +1,23 @@
+name: flutter_app_framework_signin_mongodb
+description: Basic Flutter app framework with a sign-in page
+publish_to: 'none'
+version: 0.0.1+1
+
+environment:
+  sdk: ">=2.17.0 <3.0.0"
+  flutter: ">=3.0.0"
+
+dependencies:
+  flutter:
+    sdk: flutter
+  cupertino_icons: ^1.0.2
+  http: ^0.13.6
+  provider: ^6.0.5
+  flutter_secure_storage: ^8.0.0
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+
+flutter:
+  uses-material-design: true

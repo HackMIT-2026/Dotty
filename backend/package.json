@@ -1,0 +1,17 @@
+{
+  "name": "dotty-backend",
+  "version": "0.1.0",
+  "description": "Simple Express backend for user signup/login using MongoDB",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js"
+  },
+  "dependencies": {
+    "bcryptjs": "^2.4.3",
+    "cors": "^2.8.5",
+    "dotenv": "^16.6.1",
+    "express": "^4.18.2",
+    "jsonwebtoken": "^9.0.0",
+    "mongodb": "^5.7.0"
+  }
+}
