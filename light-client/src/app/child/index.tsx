@@ -46,7 +46,7 @@ export default function ChildHome() {
 
   return (
     <Screen bleed>
-      <PetScene background={equipped.background} style={{ height: 380, paddingTop: insets.top }}>
+      <PetScene background="bg_underwater" style={{ height: 380, paddingTop: insets.top }}>
         <View style={[styles.topBar, { top: insets.top + S.sm }]}>
           <View style={styles.glass}>
             <DotCoin size={20} />
@@ -125,7 +125,7 @@ const styles = StyleSheet.create({
   topBar: { position: 'absolute', left: S.md, right: S.md, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
   glass: { flexDirection: 'row', alignItems: 'center', gap: 6, backgroundColor: 'rgba(255,255,255,0.92)', borderRadius: R.pill, paddingHorizontal: 12, paddingVertical: 6 },
   dotsText: { ...font('900'), fontSize: 17, color: C.ink },
-  bubble: { backgroundColor: '#fff', borderRadius: R.lg, paddingHorizontal: S.md, paddingVertical: 10, maxWidth: 280, ...shadow },
+  bubble: { backgroundColor: '#fff', borderRadius: R.lg, paddingHorizontal: S.md, paddingVertical: 10, marginBottom: 46, maxWidth: 280, ...shadow },
   bubbleTail: {
     position: 'absolute',
     bottom: -7,

@@ -1,12 +1,13 @@
 import { Link } from 'expo-router';
 import { useEffect, useState } from 'react';
-import { Pressable, View } from 'react-native';
+import { Pressable, StyleSheet, View } from 'react-native';
 
 import { Dotty } from '@/components/pet/dotty';
+import { PetScene } from '@/components/pet/scene';
 import { PIN_LENGTH, PinPad } from '@/components/pin-pad';
 import { ServerField } from '@/components/server-field';
 import { Body, Button, Card, Chip, Field, H1, H2, Row, Screen, Small } from '@/components/ui';
-import { C, S } from '@/constants/theme';
+import { C, R, S } from '@/constants/theme';
 import { NetworkError, authErrorText } from '@/lib/api';
 import { childLogin, login } from '@/lib/session';
 
@@ -62,9 +63,11 @@ export default function Login() {
 
   return (
     <Screen>
-      <View style={{ alignItems: 'center', marginTop: S.md }}>
-        <Dotty equipped={{ color: 'color_sky', hat: null, accessory: null, background: 'bg_day' }} size={130} />
-        <H1 style={{ marginTop: S.sm }}>Dotty</H1>
+      <PetScene background="bg_underwater" style={styles.hero}>
+        <Dotty equipped={{ color: 'color_sky', hat: null, accessory: null, background: 'bg_underwater' }} size={150} />
+      </PetScene>
+      <View style={{ alignItems: 'center' }}>
+        <H1>Dotty</H1>
         <Body color={C.inkSoft} style={{ textAlign: 'center' }}>
           Look after Dotty, and Dotty looks after you.
         </Body>
@@ -155,3 +158,7 @@ export default function Login() {
     </Screen>
   );
 }
+
+const styles = StyleSheet.create({
+  hero: { height: 190, borderRadius: R.lg, overflow: 'hidden' },
+});
