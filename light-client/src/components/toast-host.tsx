@@ -4,12 +4,18 @@ import { Platform, StyleSheet, Text, View } from 'react-native';
 import Animated, { FadeInDown, FadeOutUp } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { C, FONT, MAX_WIDTH, R, S, shadow } from '@/constants/theme';
+import { C, MAX_WIDTH, R, S, font, shadow } from '@/constants/theme';
 import { useStore } from '@/lib/store';
 import type { Toast } from '@/lib/types';
 
-const ICON: Record<Toast['kind'], string> = { reward: '⭐', info: '🐣', alert: '🔔', sync: '☁️' };
-const TINT: Record<Toast['kind'], string> = { reward: C.sunSoft, info: C.primarySoft, alert: C.pinkSoft, sync: C.mintSoft };
+import { IconTile, type IconName } from './icon';
+
+const STYLE: Record<Toast['kind'], { icon: IconName; color: string; tint: string }> = {
+  reward: { icon: 'star-four-points', color: '#D69E2E', tint: C.sunSoft },
+  info: { icon: 'check-circle', color: C.primary, tint: C.primarySoft },
+  alert: { icon: 'bell-ring-outline', color: '#E0518D', tint: C.pinkSoft },
+  sync: { icon: 'cloud-check', color: C.mint, tint: C.mintSoft },
+};
 
 function ToastCard({ toast }: { toast: Toast }) {
   const dismiss = useStore((s) => s.dismissToast);
@@ -19,9 +25,10 @@ function ToastCard({ toast }: { toast: Toast }) {
     return () => clearTimeout(timer);
   }, [toast.id, toast.kind, dismiss]);
 
+  const s = STYLE[toast.kind];
   return (
-    <Animated.View entering={FadeInDown.springify()} exiting={FadeOutUp} style={[styles.toast, { backgroundColor: TINT[toast.kind] }]}>
-      <Text style={styles.icon}>{ICON[toast.kind]}</Text>
+    <Animated.View entering={FadeInDown.springify()} exiting={FadeOutUp} style={styles.toast}>
+      <IconTile name={s.icon} color={s.color} tint={s.tint} size={40} />
       <View style={{ flex: 1 }}>
         <Text style={styles.text}>{toast.text}</Text>
         {toast.sub ? <Text style={styles.sub}>{toast.sub}</Text> : null}
@@ -34,7 +41,7 @@ export function ToastHost() {
   const toasts = useStore((s) => s.toasts);
   const insets = useSafeAreaInsets();
   return (
-    <View pointerEvents="none" style={[styles.host, { top: insets.top + S.sm }]}>
+    <View style={[styles.host, { top: insets.top + S.sm, pointerEvents: 'none' }]}>
       {toasts.map((t) => (
         <ToastCard key={t.id} toast={t} />
       ))}
@@ -47,14 +54,17 @@ const styles = StyleSheet.create({
   toast: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: S.sm,
+    gap: S.md,
     width: '100%',
     maxWidth: MAX_WIDTH - 2 * S.md,
-    padding: S.md,
+    padding: S.sm,
+    paddingRight: S.md,
     borderRadius: R.lg,
+    backgroundColor: C.card,
+    borderWidth: 1,
+    borderColor: C.line,
     ...shadow,
   },
-  icon: { fontSize: 26 },
-  text: { fontFamily: FONT, fontSize: 17, fontWeight: '800', color: C.ink },
-  sub: { fontFamily: FONT, fontSize: 13, fontWeight: '600', color: C.inkSoft },
+  text: { ...font('800'), fontSize: 16, color: C.ink },
+  sub: { ...font('600'), fontSize: 13, color: C.inkSoft },
 });

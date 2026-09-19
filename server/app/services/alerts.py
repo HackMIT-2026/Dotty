@@ -6,7 +6,7 @@ import threading
 from datetime import timedelta
 
 from .. import db
-from ..util import at_local, new_id, now, zone
+from ..util import at_local, fmt_bg, new_id, now, zone
 
 log = logging.getLogger("dotty.alerts")
 
@@ -58,20 +58,21 @@ def check_reading(patient_id: str, bg: float, ts) -> None:
     """Alert parents (and the clinician when urgent) about an out-of-range reading."""
     if now() - ts > STALE_READING:
         return
-    _, parents, clinician = recipients(patient_id)
+    fam, parents, clinician = recipients(patient_id)
     name = _name(patient_id)
+    shown = fmt_bg(bg, fam.get("glucose_unit"))
     bucket = int(ts.timestamp() // 1800)  # at most one alert per band per 30 minutes
     data = {"patient_id": patient_id, "bg_mgdl": bg, "ts": ts.isoformat()}
 
     if bg < URGENT_LOW:
-        title, body = f"Urgent: {name} is very low", f"{name}'s glucose is {bg:g} mg/dL. Treat the low now: 15 g of fast carbs, then recheck in 15 minutes."
+        title, body = f"Urgent: {name} is very low", f"{name}'s glucose is {shown}. Treat the low now: 15 g of fast carbs, then recheck in 15 minutes."
         targets = parents + ([clinician] if clinician else [])
         key = f"oor:{patient_id}:urgent:{bucket}"
     elif bg < OUT_OF_RANGE_LOW:
-        title, body = f"{name} is low", f"{name}'s glucose is {bg:g} mg/dL. Treat the low and recheck in 15 minutes."
+        title, body = f"{name} is low", f"{name}'s glucose is {shown}. Treat the low and recheck in 15 minutes."
         targets, key = parents, f"oor:{patient_id}:low:{bucket}"
     elif bg > OUT_OF_RANGE_HIGH:
-        title, body = f"{name} is high", f"{name}'s glucose is {bg:g} mg/dL. Check the care plan for what to do."
+        title, body = f"{name} is high", f"{name}'s glucose is {shown}. Check the care plan for what to do."
         targets, key = parents, f"oor:{patient_id}:high:{bucket}"
     else:
         return
@@ -139,7 +140,7 @@ def _check_sustained_high(patient_id: str, at) -> None:
         return
     if readings[-1]["ts"] - readings[0]["ts"] < timedelta(minutes=115):
         return
-    _, parents, clinician = recipients(patient_id)
+    fam, parents, clinician = recipients(patient_id)
     name = _name(patient_id)
     bucket = int(at.timestamp() // 7200)
     for uid in parents + ([clinician] if clinician else []):
@@ -147,7 +148,7 @@ def _check_sustained_high(patient_id: str, at) -> None:
             uid,
             "out_of_range",
             f"{name} has been very high for 2 hours",
-            f"{name}'s glucose has stayed above {SUSTAINED_HIGH} mg/dL for about 2 hours.",
+            f"{name}'s glucose has stayed above {fmt_bg(SUSTAINED_HIGH, fam.get('glucose_unit'))} for about 2 hours.",
             {"patient_id": patient_id, "severity": "high"},
             dedupe=f"high2h:{patient_id}:{bucket}:{uid}",
         )

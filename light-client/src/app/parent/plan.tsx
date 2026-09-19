@@ -1,11 +1,14 @@
 import { useFocusEffect } from 'expo-router';
 import { useCallback, useState } from 'react';
 
-import { Body, Card, H1, H2, Row, Screen, Small } from '@/components/ui';
-import { C } from '@/constants/theme';
+import { Icon, type IconName } from '@/components/icon';
+import { PageHeader } from '@/components/page-header';
+import { Body, Card, H2, Row, Screen, Small } from '@/components/ui';
+import { C, font } from '@/constants/theme';
 import { api } from '@/lib/api';
 import { useStore } from '@/lib/store';
 import { dayLabel, timeAgo, useNow } from '@/lib/time';
+import { fmtBg, useGlucoseUnit } from '@/lib/units';
 
 interface Note {
   id: string;
@@ -13,19 +16,23 @@ interface Note {
   created_at: string;
 }
 
-function Item({ label, value }: { label: string; value: string }) {
+function Item({ label, value, icon }: { label: string; value: string; icon?: IconName }) {
   return (
     <Row style={{ justifyContent: 'space-between' }}>
-      <Body color={C.inkSoft}>{label}</Body>
-      <Body style={{ fontWeight: '700' }}>{value}</Body>
+      <Row style={{ gap: 6, flexShrink: 1 }}>
+        {icon ? <Icon name={icon} size={18} color={C.primary} /> : null}
+        <Body color={C.inkSoft}>{label}</Body>
+      </Row>
+      <Body style={font('800')}>{value}</Body>
     </Row>
   );
 }
 
-const REMINDER_EMOJI = { check: '🩺', meal: '🍽️', bedtime: '🌙' } as const;
+const REMINDER_ICON = { check: 'heart-pulse', meal: 'silverware-fork-knife', bedtime: 'weather-night' } as const;
 
 export default function PlanScreen() {
   const now = useNow();
+  const unit = useGlucoseUnit();
   const plan = useStore((s) => s.plan);
   const patient = useStore((s) => s.patient);
   const clinician = useStore((s) => s.session?.family?.clinician?.name);
@@ -43,7 +50,7 @@ export default function PlanScreen() {
   if (!plan) {
     return (
       <Screen>
-        <H1>Treatment plan</H1>
+        <PageHeader title="Treatment plan" />
         <Card>
           <Body>No plan yet. Your care team sets it up in the clinician portal, and it appears here automatically.</Body>
         </Card>
@@ -53,7 +60,7 @@ export default function PlanScreen() {
 
   return (
     <Screen>
-      <H1>Treatment plan</H1>
+      <PageHeader title="Treatment plan" />
       <Small>
         Version {plan.version} · by {clinician ?? 'your care team'} · updated {timeAgo(plan.updated_at, now)}
       </Small>
@@ -69,9 +76,9 @@ export default function PlanScreen() {
 
       <Card>
         <H2>Corrections</H2>
-        <Item label="Sensitivity (ISF)" value={`1 u lowers ${plan.isf_mgdl_per_unit} mg/dL`} />
-        <Item label="Correct down to" value={`${plan.correction_target} mg/dL`} />
-        <Item label="Target range" value={`${plan.target.low}–${plan.target.high} mg/dL`} />
+        <Item label="Sensitivity (ISF)" value={`1 u lowers ${fmtBg(plan.isf_mgdl_per_unit, unit)}`} />
+        <Item label="Correct down to" value={fmtBg(plan.correction_target, unit)} />
+        <Item label="Target range" value={`${fmtBg(plan.target.low, unit, false)}–${fmtBg(plan.target.high, unit)}`} />
         <Item label="Max single dose" value={`${plan.max_bolus} u`} />
       </Card>
 
@@ -94,7 +101,7 @@ export default function PlanScreen() {
       <Card>
         <H2>Check-up reminders</H2>
         {plan.reminders.map((r) => (
-          <Item key={r.time + r.kind} label={`${REMINDER_EMOJI[r.kind]} ${r.label ?? r.kind}`} value={`${r.time} ±${r.window_min} min`} />
+          <Item key={r.time + r.kind} icon={REMINDER_ICON[r.kind]} label={r.label ?? r.kind} value={`${r.time} ±${r.window_min} min`} />
         ))}
       </Card>
 

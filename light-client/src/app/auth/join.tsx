@@ -4,7 +4,7 @@ import { View } from 'react-native';
 
 import { Body, Button, Card, Chip, Field, H1, Row, Screen, Small } from '@/components/ui';
 import { C, S } from '@/constants/theme';
-import { api, errorText } from '@/lib/api';
+import { api, authErrorText } from '@/lib/api';
 import { localTz, startSession } from '@/lib/session';
 import type { User } from '@/lib/types';
 
@@ -39,7 +39,7 @@ export default function Join() {
       });
       await startSession(res);
     } catch (e) {
-      setError(errorText(e));
+      setError(authErrorText(e));
     } finally {
       setBusy(false);
     }
@@ -49,8 +49,8 @@ export default function Join() {
     <Screen>
       <H1 style={{ marginTop: S.lg }}>Create an account</H1>
       <Row>
-        <Chip label="I'm a parent" emoji="🧑" selected={role === 'parent'} onPress={() => setRole('parent')} />
-        <Chip label="I'm a kid" emoji="🧒" selected={role === 'child'} onPress={() => setRole('child')} />
+        <Chip label="I'm a parent" icon="account-heart" selected={role === 'parent'} onPress={() => setRole('parent')} />
+        <Chip label="I'm a kid" icon="human-child" selected={role === 'child'} onPress={() => setRole('child')} />
       </Row>
       <Card>
         <Field label={role === 'child' ? 'Your first name' : 'Your name'} value={name} onChangeText={setName} autoCapitalize="words" />

@@ -2,7 +2,10 @@
  * Everything the apps show that can be worked out from the local event log alone, so screens stay
  * correct with no connection. The rules mirror server/app/services/gamification.py.
  */
+import type { IconName } from '@/components/icon';
+
 import type { DotEvent, Intensity, Mood, Quest } from './types';
+import { fmtBg, type GlucoseUnit } from './units';
 
 const HOUR = 3_600_000;
 export const SLEEPY_AFTER_HOURS = 4;
@@ -104,10 +107,10 @@ export function recentActivity(events: DotEvent[], now: number): Intensity | nul
   return best;
 }
 
-export function eventTitle(e: DotEvent): string {
+export function eventTitle(e: DotEvent, unit: GlucoseUnit = 'mg/dL'): string {
   switch (e.type) {
     case 'reading':
-      return `Glucose ${bgOf(e)} mg/dL`;
+      return `Glucose ${fmtBg(bgOf(e), unit)}`;
     case 'meal':
       return `Meal · ${e.data.carbs_g} g carbs`;
     case 'activity':
@@ -121,8 +124,13 @@ export function eventTitle(e: DotEvent): string {
   }
 }
 
-export function eventEmoji(e: DotEvent): string {
-  return { reading: '🩸', meal: '🍽️', activity: '⚽', bolus: '💉', basal: '💉', pet: '🐾' }[e.type];
-}
+export const EVENT_ICON: Record<DotEvent['type'], { icon: IconName; color: string; tint: string }> = {
+  reading: { icon: 'water', color: '#E0518D', tint: '#FFE4F0' },
+  meal: { icon: 'silverware-fork-knife', color: '#D97706', tint: '#FFF1D6' },
+  activity: { icon: 'run', color: '#1F9D74', tint: '#DDF7EC' },
+  bolus: { icon: 'needle', color: '#2F80ED', tint: '#E3F1FF' },
+  basal: { icon: 'needle', color: '#5647C9', tint: '#ECE9FD' },
+  pet: { icon: 'paw', color: '#6C5CE7', tint: '#ECE9FD' },
+};
 
 const cap = (s: string) => s.charAt(0).toUpperCase() + s.slice(1);

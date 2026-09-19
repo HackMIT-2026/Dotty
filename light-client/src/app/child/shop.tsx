@@ -2,20 +2,22 @@ import { useFocusEffect } from 'expo-router';
 import { useCallback, useState } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 
+import { DotCoin, Icon, type IconName } from '@/components/icon';
 import { Dotty } from '@/components/pet/dotty';
 import { PetScene } from '@/components/pet/scene';
-import { Button, Chip, H1, Row, Screen, Small } from '@/components/ui';
-import { C, FONT, R, S } from '@/constants/theme';
+import { PageHeader } from '@/components/page-header';
+import { Button, Chip, Row, Screen, Small } from '@/components/ui';
+import { C, R, S, font, shadow } from '@/constants/theme';
 import { api, errorText } from '@/lib/api';
 import { BADGES, DEFAULT_EQUIPPED } from '@/lib/pet';
 import { useStore } from '@/lib/store';
 import type { Pet, ShopItem, Slot } from '@/lib/types';
 
-const SLOTS: { id: Slot; label: string; emoji: string }[] = [
-  { id: 'hat', label: 'Hats', emoji: '🎩' },
-  { id: 'accessory', label: 'Extras', emoji: '🕶️' },
-  { id: 'color', label: 'Colors', emoji: '🎨' },
-  { id: 'background', label: 'Places', emoji: '🏝️' },
+const SLOTS: { id: Slot; label: string; icon: IconName }[] = [
+  { id: 'hat', label: 'Hats', icon: 'hat-fedora' },
+  { id: 'accessory', label: 'Extras', icon: 'glasses' },
+  { id: 'color', label: 'Colors', icon: 'palette' },
+  { id: 'background', label: 'Places', icon: 'image-filter-hdr' },
 ];
 
 const RARITY_COLOR = { common: C.inkSoft, rare: C.sky, epic: C.primary } as const;
@@ -76,25 +78,14 @@ export default function Shop() {
       const removable = item.slot === 'hat' || item.slot === 'accessory';
       return <Button title={removable ? 'Take off' : 'Wearing'} variant="secondary" disabled={!removable} onPress={() => act(item)} loading={busy} />;
     }
-    if (owned) return <Button title="Wear it" variant="mint" onPress={() => act(item)} loading={busy} />;
-    if (locked) return <Button title={`🔒 ${BADGES[item.unlock_badge!]?.name ?? 'Badge'} badge`} variant="secondary" disabled onPress={() => {}} />;
+    if (owned) return <Button title="Wear it" icon="hanger" variant="mint" onPress={() => act(item)} loading={busy} />;
+    if (locked) return <Button title={`${BADGES[item.unlock_badge!]?.name ?? 'Badge'} badge`} icon="lock-outline" variant="secondary" disabled onPress={() => {}} />;
     const affordable = (pet?.dots ?? 0) >= item.price;
-    return <Button title={`Buy for ${item.price} Dots`} variant="sun" disabled={!affordable} onPress={() => act(item)} loading={busy} />;
+    return <Button title={`Buy for ${item.price}`} leading={<DotCoin size={22} />} variant="sun" disabled={!affordable} onPress={() => act(item)} loading={busy} />;
   }
 
-  return (
-    <Screen>
-      <Row style={{ justifyContent: 'space-between' }}>
-        <H1>Shop</H1>
-        <View style={styles.wallet}>
-          <Text style={styles.walletText}>🔵 {pet?.dots ?? 0} Dots</Text>
-        </View>
-      </Row>
-
-      <PetScene background={preview.background} style={styles.preview}>
-        <Dotty equipped={preview} size={170} />
-      </PetScene>
-
+  const footer = (
+    <View style={styles.footer}>
       {tryOn ? (
         <View style={styles.tryOn}>
           <View style={{ flex: 1 }}>
@@ -104,12 +95,27 @@ export default function Shop() {
           {buttonFor(tryOn)}
         </View>
       ) : (
-        <Small style={{ textAlign: 'center' }}>Tap an item to try it on Dotty</Small>
+        <Small style={{ textAlign: 'center', paddingVertical: S.sm }}>Tap an item to try it on Dotty</Small>
       )}
+    </View>
+  );
+
+  return (
+    <Screen footer={footer}>
+      <PageHeader title="Shop">
+        <View style={styles.wallet}>
+          <DotCoin size={18} />
+          <Text style={styles.walletText}>{pet?.dots ?? 0}</Text>
+        </View>
+      </PageHeader>
+
+      <PetScene background={preview.background} style={styles.preview}>
+        <Dotty equipped={preview} size={170} />
+      </PetScene>
 
       <Row style={{ flexWrap: 'wrap' }}>
         {SLOTS.map((s) => (
-          <Chip key={s.id} label={s.label} emoji={s.emoji} selected={slot === s.id} onPress={() => { setSlot(s.id); setTryOn(null); }} />
+          <Chip key={s.id} label={s.label} icon={s.icon} selected={slot === s.id} onPress={() => { setSlot(s.id); setTryOn(null); }} />
         ))}
       </Row>
 
@@ -133,9 +139,18 @@ export default function Shop() {
                 <Text style={styles.itemName} numberOfLines={1}>
                   {item.name}
                 </Text>
-                <Small color={wearing ? C.mint : owned ? C.primaryDark : locked ? C.inkSoft : C.ink}>
-                  {wearing ? 'Wearing' : owned ? 'Owned' : locked ? '🔒 Badge' : `🔵 ${item.price}`}
-                </Small>
+                <View style={styles.price}>
+                  {wearing ? (
+                    <Icon name="check-circle" size={15} color={C.mint} />
+                  ) : locked ? (
+                    <Icon name="lock-outline" size={15} color={C.inkSoft} />
+                  ) : !owned ? (
+                    <DotCoin size={15} />
+                  ) : null}
+                  <Small color={wearing ? C.mint : owned ? C.primaryDark : locked ? C.inkSoft : C.ink}>
+                    {wearing ? 'Wearing' : owned ? 'Owned' : locked ? 'Badge' : String(item.price)}
+                  </Small>
+                </View>
               </Pressable>
             );
           })}
@@ -146,14 +161,16 @@ export default function Shop() {
 }
 
 const styles = StyleSheet.create({
-  wallet: { backgroundColor: C.primarySoft, borderRadius: R.pill, paddingHorizontal: 14, paddingVertical: 6 },
-  walletText: { fontFamily: FONT, fontSize: 16, fontWeight: '800', color: C.primaryDark },
+  price: { flexDirection: 'row', alignItems: 'center', gap: 4 },
+  wallet: { flexDirection: 'row', alignItems: 'center', gap: 6, backgroundColor: C.primarySoft, borderRadius: R.pill, paddingHorizontal: 11, paddingVertical: 6 },
+  walletText: { ...font('800'), fontSize: 16, color: C.primaryDark },
   preview: { height: 200, borderRadius: R.lg },
-  tryOn: { flexDirection: 'row', alignItems: 'center', gap: S.sm, backgroundColor: C.card, borderRadius: R.lg, padding: S.sm, paddingLeft: S.md },
+  footer: { width: '100%', maxWidth: 560, alignSelf: 'center', paddingHorizontal: S.md, paddingVertical: S.sm, backgroundColor: C.bg, borderTopWidth: 1, borderTopColor: C.line },
+  tryOn: { flexDirection: 'row', alignItems: 'center', gap: S.sm, backgroundColor: C.card, borderRadius: R.lg, padding: S.sm, paddingLeft: S.md, ...shadow },
   grid: { flexDirection: 'row', flexWrap: 'wrap', gap: S.sm },
-  item: { width: '31%', flexGrow: 1, alignItems: 'center', backgroundColor: C.card, borderRadius: R.md, padding: S.sm, borderWidth: 3, borderColor: 'transparent' },
+  item: { width: '31.6%', alignItems: 'center', backgroundColor: C.card, borderRadius: R.md, padding: S.sm, borderWidth: 3, borderColor: 'transparent' },
   itemOn: { borderColor: C.primary },
   itemWearing: { backgroundColor: C.mintSoft },
   itemScene: { width: '100%', height: 84, borderRadius: R.sm },
-  itemName: { fontFamily: FONT, fontSize: 13, fontWeight: '800', color: C.ink, marginTop: 4 },
+  itemName: { ...font('800'), fontSize: 13, color: C.ink, marginTop: 4 },
 });

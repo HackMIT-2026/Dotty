@@ -3,6 +3,7 @@ from uuid import uuid4
 from zoneinfo import ZoneInfo
 
 DEFAULT_TZ = "America/New_York"
+MGDL_PER_MMOL = 18.0
 
 
 def now() -> datetime:
@@ -45,3 +46,10 @@ def pub(doc: dict | None) -> dict | None:
     for hidden in ("password_hash", "dedupe", "streak_awards"):
         out.pop(hidden, None)
     return out
+
+
+def fmt_bg(mgdl: float, unit: str | None) -> str:
+    """Glucose for people to read. Values are always stored in mg/dL; families choose how they see them."""
+    if unit == "mmol/L":
+        return f"{mgdl / MGDL_PER_MMOL:.1f} mmol/L"
+    return f"{mgdl:g} mg/dL"

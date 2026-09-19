@@ -90,6 +90,7 @@ interface State {
   signIn: (s: Session) => void;
   signOut: () => void;
   setFamily: (f: Family | null) => void;
+  setGlucoseUnit: (unit: Family['glucose_unit']) => void;
   logEvent: (type: DotEvent['type'], data: Record<string, any>) => DotEvent;
   ackPush: (acceptedIds: string[], pet: Pet) => void;
   applyPull: (res: PullResult) => void;
@@ -132,8 +133,12 @@ export const useStore = create<State>()(
       setApiUrl: (apiUrl) => set({ apiUrl }),
       setForceOffline: (forceOffline) => set({ forceOffline, ...(forceOffline ? { online: false } : {}) }),
       signIn: (session) => set({ ...EMPTY_DATA, session }),
-      signOut: () => set({ ...EMPTY_DATA, toasts: [] }),
+      signOut: () => set({ ...EMPTY_DATA, toasts: [], forceOffline: false, online: true }),
       setFamily: (family) => set((s) => (s.session ? { session: { ...s.session, family } } : {})),
+      setGlucoseUnit: (glucose_unit) =>
+        set((s) =>
+          s.session?.family ? { session: { ...s.session, family: { ...s.session.family, glucose_unit } } } : {},
+        ),
 
       logEvent: (type, data) => {
         const role = get().session?.user.role;
@@ -161,6 +166,10 @@ export const useStore = create<State>()(
 
       applyPull: (res) =>
         set((s) => ({
+          session:
+            s.session?.family && res.settings && res.settings.glucose_unit !== s.session.family.glucose_unit
+              ? { ...s.session, family: { ...s.session.family, glucose_unit: res.settings.glucose_unit } }
+              : s.session,
           patient: res.patient,
           plan: res.plan,
           pet: s.outbox.reduce<Pet | null>(withPreview, res.pet),

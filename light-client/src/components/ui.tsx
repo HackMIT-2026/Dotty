@@ -15,7 +15,9 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-import { C, FONT, MAX_WIDTH, R, S, shadow } from '@/constants/theme';
+import { C, MAX_WIDTH, R, S, font, shadow } from '@/constants/theme';
+
+import { Icon, type IconName } from './icon';
 
 // ---------- text ----------
 
@@ -35,10 +37,10 @@ export const Small = ({ children, style, color = C.inkSoft, numberOfLines }: Tex
 );
 
 const t = StyleSheet.create({
-  h1: { fontFamily: FONT, fontSize: 28, fontWeight: '800', letterSpacing: -0.3 },
-  h2: { fontFamily: FONT, fontSize: 19, fontWeight: '700' },
-  body: { fontFamily: FONT, fontSize: 16, fontWeight: '500', lineHeight: 22 },
-  small: { fontFamily: FONT, fontSize: 13, fontWeight: '600', lineHeight: 18 },
+  h1: { ...font('900'), fontSize: 28, letterSpacing: -0.3 },
+  h2: { ...font('800'), fontSize: 19 },
+  body: { ...font('600'), fontSize: 16, lineHeight: 22 },
+  small: { ...font('700'), fontSize: 13, lineHeight: 18 },
 });
 
 // ---------- layout ----------
@@ -52,9 +54,11 @@ interface ScreenProps {
   refreshing?: boolean;
   onRefresh?: () => void;
   contentStyle?: StyleProp<ViewStyle>;
+  /** Docked below the scrolling content (e.g. the shop's buy bar). */
+  footer?: ReactNode;
 }
 
-export function Screen({ children, scroll = true, bleed, background = C.bg, refreshing, onRefresh, contentStyle }: ScreenProps) {
+export function Screen({ children, scroll = true, bleed, background = C.bg, refreshing, onRefresh, contentStyle, footer }: ScreenProps) {
   const inner = [styles.content, bleed && { padding: 0, maxWidth: undefined }, contentStyle];
   return (
     <SafeAreaView edges={bleed ? [] : ['top']} style={[styles.screen, { backgroundColor: background }]}>
@@ -68,6 +72,7 @@ export function Screen({ children, scroll = true, bleed, background = C.bg, refr
       ) : (
         <View style={[{ flex: 1 }, inner]}>{children}</View>
       )}
+      {footer}
     </SafeAreaView>
   );
 }
@@ -89,7 +94,9 @@ interface ButtonProps {
   size?: 'md' | 'lg';
   disabled?: boolean;
   loading?: boolean;
-  emoji?: string;
+  icon?: IconName;
+  /** Custom leading element instead of an icon (e.g. the Dot coin). */
+  leading?: ReactNode;
   style?: StyleProp<ViewStyle>;
 }
 
@@ -101,8 +108,9 @@ const VARIANTS = {
   ghost: { bg: 'transparent', fg: C.primaryDark },
 } as const;
 
-export function Button({ title, onPress, variant = 'primary', size = 'md', disabled, loading, emoji, style }: ButtonProps) {
+export function Button({ title, onPress, variant = 'primary', size = 'md', disabled, loading, icon, leading, style }: ButtonProps) {
   const v = VARIANTS[variant];
+  const fontSize = size === 'lg' ? 19 : 16;
   return (
     <Pressable
       accessibilityRole="button"
@@ -119,24 +127,21 @@ export function Button({ title, onPress, variant = 'primary', size = 'md', disab
       {loading ? (
         <ActivityIndicator color={v.fg} />
       ) : (
-        <Text style={[t.body, { color: v.fg, fontWeight: '800', fontSize: size === 'lg' ? 19 : 16 }]}>
-          {emoji ? `${emoji}  ` : ''}
-          {title}
-        </Text>
+        <View style={styles.buttonInner}>
+          {leading ?? (icon ? <Icon name={icon} size={fontSize + 4} color={v.fg} /> : null)}
+          <Text style={[t.body, font('800'), { color: v.fg, fontSize }]}>{title}</Text>
+        </View>
       )}
     </Pressable>
   );
 }
 
-export function Chip({ label, selected, onPress, emoji }: { label: string; selected?: boolean; onPress: () => void; emoji?: string }) {
+export function Chip({ label, selected, onPress, icon }: { label: string; selected?: boolean; onPress: () => void; icon?: IconName }) {
+  const fg = selected ? '#fff' : C.ink;
   return (
-    <Pressable
-      onPress={onPress}
-      style={({ pressed }) => [styles.chip, selected && styles.chipOn, pressed && { opacity: 0.8 }]}>
-      <Text style={[t.small, { color: selected ? '#fff' : C.ink, fontSize: 14 }]}>
-        {emoji ? `${emoji} ` : ''}
-        {label}
-      </Text>
+    <Pressable onPress={onPress} style={({ pressed }) => [styles.chip, selected && styles.chipOn, pressed && { opacity: 0.8 }]}>
+      {icon ? <Icon name={icon} size={17} color={selected ? '#fff' : C.primary} /> : null}
+      <Text style={[t.small, { color: fg, fontSize: 14 }]}>{label}</Text>
     </Pressable>
   );
 }
@@ -145,12 +150,7 @@ export function Field({ label, style, ...props }: { label: string } & TextInputP
   return (
     <View style={{ gap: 6 }}>
       <Small>{label}</Small>
-      <TextInput
-        placeholderTextColor="#A9A5C4"
-        autoCapitalize="none"
-        {...props}
-        style={[styles.input, style]}
-      />
+      <TextInput placeholderTextColor="#A9A5C4" autoCapitalize="none" {...props} style={[styles.input, style]} />
     </View>
   );
 }
@@ -163,10 +163,11 @@ export function ProgressBar({ value, color = C.mint, height = 10 }: { value: num
   );
 }
 
-export function Pill({ children, bg = C.primarySoft, fg = C.primaryDark }: { children: ReactNode; bg?: string; fg?: string }) {
+export function Pill({ children, bg = C.primarySoft, fg = C.primaryDark, icon }: { children: ReactNode; bg?: string; fg?: string; icon?: IconName }) {
   return (
     <View style={[styles.pill, { backgroundColor: bg }]}>
-      <Text style={[t.small, { color: fg, fontWeight: '800' }]}>{children}</Text>
+      {icon ? <Icon name={icon} size={15} color={fg} /> : null}
+      <Text style={[t.small, font('800'), { color: fg }]}>{children}</Text>
     </View>
   );
 }
@@ -177,12 +178,22 @@ const styles = StyleSheet.create({
   card: { backgroundColor: C.card, borderRadius: R.lg, padding: S.md, gap: S.sm, ...shadow },
   button: { minHeight: 48, borderRadius: R.pill, paddingHorizontal: S.lg, alignItems: 'center', justifyContent: 'center' },
   buttonLg: { minHeight: 60 },
-  chip: { paddingHorizontal: 14, paddingVertical: 9, borderRadius: R.pill, backgroundColor: C.card, borderWidth: 2, borderColor: C.line },
+  buttonInner: { flexDirection: 'row', alignItems: 'center', gap: S.sm },
+  chip: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    paddingHorizontal: 14,
+    paddingVertical: 9,
+    borderRadius: R.pill,
+    backgroundColor: C.card,
+    borderWidth: 2,
+    borderColor: C.line,
+  },
   chipOn: { backgroundColor: C.primary, borderColor: C.primary },
   input: {
-    fontFamily: FONT,
+    ...font('700'),
     fontSize: 17,
-    fontWeight: '600',
     color: C.ink,
     backgroundColor: C.card,
     borderWidth: 2,
@@ -191,5 +202,5 @@ const styles = StyleSheet.create({
     paddingHorizontal: S.md,
     paddingVertical: 12,
   },
-  pill: { alignSelf: 'flex-start', paddingHorizontal: 10, paddingVertical: 4, borderRadius: R.pill },
+  pill: { flexDirection: 'row', alignItems: 'center', gap: 4, alignSelf: 'flex-start', paddingHorizontal: 10, paddingVertical: 4, borderRadius: R.pill },
 });

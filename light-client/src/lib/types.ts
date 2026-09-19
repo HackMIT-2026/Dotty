@@ -21,6 +21,7 @@ export interface Family {
   id: string;
   code: string;
   tz: string;
+  glucose_unit: 'mg/dL' | 'mmol/L';
   child: Person | null;
   parents: (Person | null)[];
   clinician: Person | null;
@@ -129,6 +130,7 @@ export interface Toast {
 
 export interface PullResult {
   server_time: string;
+  settings?: { glucose_unit: 'mg/dL' | 'mmol/L' };
   patient: { id: string; name: string };
   events: DotEvent[];
   plan: Plan | null;

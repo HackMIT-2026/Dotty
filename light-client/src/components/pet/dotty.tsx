@@ -18,6 +18,15 @@ import type { Mood, Pet } from '@/lib/types';
 
 type Equipped = Pet['equipped'];
 
+/** Points of a 5-pointed star centred on (cx, cy). */
+function star(cx: number, cy: number, r: number): string {
+  return Array.from({ length: 10 }, (_, i) => {
+    const radius = i % 2 ? r * 0.45 : r;
+    const a = (Math.PI / 5) * i - Math.PI / 2;
+    return `${(cx + radius * Math.cos(a)).toFixed(1)},${(cy + radius * Math.sin(a)).toFixed(1)}`;
+  }).join(' ');
+}
+
 export const BODY_COLORS: Record<string, { fill: string; shade: string; cheek: string }> = {
   color_sky: { fill: '#7CC4FF', shade: '#5AAAF0', cheek: '#FF9EC4' },
   color_mint: { fill: '#7FE0B8', shade: '#58C99C', cheek: '#FF9EB0' },
@@ -114,8 +123,8 @@ function Hat({ id }: { id: string | null }) {
         <G>
           <Path d="M100 -18 L64 64 L136 64 Z" fill="#5647C9" />
           <Ellipse cx={100} cy={64} rx={52} ry={9} fill="#3F33A6" />
-          <SvgText x={88} y={42} fontSize={18} fill="#FFD34D">★</SvgText>
-          <SvgText x={102} y={20} fontSize={12} fill="#FFD34D">★</SvgText>
+          <Polygon points={star(96, 36, 9)} fill="#FFD34D" />
+          <Polygon points={star(106, 14, 6)} fill="#FFD34D" />
         </G>
       );
     default:

@@ -306,3 +306,27 @@ def test_simulator_endpoint_skip_lunch_and_access(client, family):
     assert "missed_treatment" in _kinds(client, family["parent"])
     other, _ = register(client, "Other", "parent")
     assert client.post(f"/simulator/{family['pid']}", json={"scenario": "high"}, headers=auth(other)).status_code == 403
+
+
+# --- glucose units --------------------------------------------------------------------------
+
+
+def test_parent_sets_glucose_unit_and_child_device_receives_it(client, family):
+    assert client.get("/me", headers=family["parent"]["h"]).json()["family"]["glucose_unit"] == "mg/dL"
+    r = client.put("/families/settings", json={"glucose_unit": "mmol/L"}, headers=family["parent"]["h"])
+    assert r.status_code == 200 and r.json()["glucose_unit"] == "mmol/L"
+    assert client.get("/sync/pull", headers=family["child"]["h"]).json()["settings"] == {"glucose_unit": "mmol/L"}
+    assert client.get("/patients", headers=family["doc"]["h"]).json()[0]["glucose_unit"] == "mmol/L"
+
+
+def test_only_parents_change_units_and_values_are_validated(client, family):
+    assert client.put("/families/settings", json={"glucose_unit": "mmol/L"}, headers=family["child"]["h"]).status_code == 403
+    assert client.put("/families/settings", json={"glucose_unit": "mg"}, headers=family["parent"]["h"]).status_code == 422
+
+
+def test_alerts_use_the_family_unit_but_storage_stays_mgdl(client, family):
+    client.put("/families/settings", json={"glucose_unit": "mmol/L"}, headers=family["parent"]["h"])
+    push(client, family["child"], make_event("reading", {"bg_mgdl": 63}))
+    note = next(n for n in client.get("/notifications", headers=family["parent"]["h"]).json()["notifications"] if n["kind"] == "out_of_range")
+    assert "3.5 mmol/L" in note["body"] and "mg/dL" not in note["body"]
+    assert db.events.find_one({"patient_id": family["pid"]})["data"]["bg_mgdl"] == 63

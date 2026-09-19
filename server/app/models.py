@@ -103,6 +103,10 @@ class DoseIn(BaseModel):
     activity: Literal["none", "light", "moderate", "vigorous"] | None = None
 
 
+class FamilySettingsIn(BaseModel):
+    glucose_unit: Literal["mg/dL", "mmol/L"]
+
+
 class NoteIn(BaseModel):
     text: str = Field(min_length=1, max_length=1000)
 

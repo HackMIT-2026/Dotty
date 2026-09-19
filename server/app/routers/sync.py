@@ -57,8 +57,10 @@ def pull(since: datetime | None = None, user: dict = Depends(require_role("child
     notifications = list(db.notifications.find(notif_query).sort("created_at", -1).limit(100))
 
     child = db.users.find_one({"_id": pid}, {"name": 1})
+    fam = family_of(user) or {}
     return {
         "server_time": server_time,
+        "settings": {"glucose_unit": fam.get("glucose_unit", "mg/dL")},
         "patient": {"id": pid, "name": child["name"]},
         "events": [pub(e) for e in events],
         "plan": pub(db.plans.find_one({"patient_id": pid})),

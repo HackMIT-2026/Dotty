@@ -79,3 +79,9 @@ export function errorText(e: unknown): string {
   if (e instanceof Error) return e.message;
   return 'Something went wrong';
 }
+
+/** Error text for login/sign-up, where "offline" usually means the server address is wrong or the API is down. */
+export function authErrorText(e: unknown): string {
+  if (e instanceof NetworkError) return `Can't reach the Dotty server at ${apiBase()}. Is it running? Check "Server settings" below.`;
+  return errorText(e);
+}

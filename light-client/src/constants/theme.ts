@@ -27,11 +27,19 @@ export const C = {
 export const S = { xs: 4, sm: 8, md: 16, lg: 24, xl: 32 } as const;
 export const R = { sm: 10, md: 16, lg: 24, pill: 999 } as const;
 
-export const FONT = Platform.select({
-  ios: 'ui-rounded',
-  web: 'ui-rounded, "SF Pro Rounded", system-ui, -apple-system, "Segoe UI", sans-serif',
-  default: undefined,
-});
+/** Nunito (Google Fonts), loaded in the root layout. One family per weight so Android renders weights correctly. */
+export const F = {
+  medium: 'Nunito_600SemiBold',
+  bold: 'Nunito_700Bold',
+  heavy: 'Nunito_800ExtraBold',
+  black: 'Nunito_900Black',
+} as const;
+
+type Weight = '500' | '600' | '700' | '800' | '900';
+const WEIGHT: Record<Weight, string> = { '500': F.medium, '600': F.medium, '700': F.bold, '800': F.heavy, '900': F.black };
+
+/** Style for a Nunito weight, e.g. `{ ...font('800'), fontSize: 20 }`. */
+export const font = (w: Weight = '600') => ({ fontFamily: WEIGHT[w] });
 
 export const MAX_WIDTH = 560;
 

@@ -27,6 +27,7 @@ def _summary(pid: str) -> dict:
         "id": pid,
         "name": child["name"] if child else "?",
         "family_code": fam.get("code"),
+        "glucose_unit": fam.get("glucose_unit", "mg/dL"),
         "tir_pct": round(100 * in_range / len(values)) if values else None,
         "avg_mgdl": round(sum(values) / len(values)) if values else None,
         "readings_count": len(values),

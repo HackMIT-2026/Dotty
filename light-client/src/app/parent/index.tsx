@@ -3,18 +3,20 @@ import { useState } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { GlucoseChart } from '@/components/glucose-chart';
+import { Icon, IconTile } from '@/components/icon';
 import { QuickLog } from '@/components/quick-log';
-import { SyncBadge } from '@/components/sync-badge';
-import { Body, Button, Card, Chip, H1, H2, Row, Screen, Small } from '@/components/ui';
-import { C, FONT, R, S } from '@/constants/theme';
+import { PageHeader } from '@/components/page-header';
+import { Body, Button, Card, Chip, H2, Row, Screen, Small } from '@/components/ui';
+import { C, R, S, font } from '@/constants/theme';
 import { api, errorText } from '@/lib/api';
-import { bgOf, eventEmoji, eventTitle, lastReading, ofType, timeInRange, todaysEvents, trend } from '@/lib/derive';
+import { EVENT_ICON, bgOf, eventTitle, lastReading, ofType, timeInRange, todaysEvents, trend } from '@/lib/derive';
 import { useStore } from '@/lib/store';
 import { syncNow } from '@/lib/sync';
 import { timeAgo, useNow } from '@/lib/time';
 import type { Pet } from '@/lib/types';
+import { fmtBg, useGlucoseUnit } from '@/lib/units';
 
-const TREND = { up: '↗', down: '↘', flat: '→' } as const;
+const TREND = { up: 'trending-up', down: 'trending-down', flat: 'trending-neutral' } as const;
 
 function bgColor(bg: number, low: number, high: number) {
   if (bg < low) return C.danger;
@@ -41,6 +43,7 @@ export default function ParentHome() {
   const notifications = useStore((s) => s.notifications);
   const syncing = useStore((s) => s.syncing);
   const pushToast = useStore((s) => s.pushToast);
+  const unit = useGlucoseUnit();
   const [hours, setHours] = useState(24);
   const [highFiving, setHighFiving] = useState(false);
 
@@ -64,7 +67,7 @@ export default function ParentHome() {
   if (!family?.child) {
     return (
       <Screen>
-        <H1>Welcome!</H1>
+        <PageHeader title="Welcome!" />
         <Card>
           <H2>Add your child</H2>
           <Body>
@@ -93,15 +96,7 @@ export default function ParentHome() {
 
   return (
     <Screen refreshing={syncing} onRefresh={() => void syncNow()}>
-      <Row style={{ justifyContent: 'space-between' }}>
-        <H1>{childName}'s day</H1>
-        <Row>
-          <SyncBadge />
-          <Pressable onPress={() => router.push('/settings')} accessibilityLabel="Settings">
-            <Text style={{ fontSize: 20 }}>⚙️</Text>
-          </Pressable>
-        </Row>
-      </Row>
+      <PageHeader title={`${childName}'s day`} />
 
       <Card>
         {last ? (
@@ -109,15 +104,16 @@ export default function ParentHome() {
             <View>
               <Small>Last glucose · {timeAgo(last.ts, now)}</Small>
               <Row style={{ alignItems: 'baseline' }}>
-                <Text style={[styles.big, { color: bgColor(bgOf(last), low, high) }]}>{bgOf(last)}</Text>
-                <Body color={C.inkSoft}>mg/dL {dir ? TREND[dir] : ''}</Body>
+                <Text style={[styles.big, { color: bgColor(bgOf(last), low, high) }]}>{fmtBg(bgOf(last), unit, false)}</Text>
+                <Body color={C.inkSoft}>{unit}</Body>
+                {dir ? <Icon name={TREND[dir]} size={24} color={C.inkSoft} /> : null}
               </Row>
               {last.source === 'simulator' ? <Small>from the demo simulator</Small> : null}
             </View>
             <View style={{ alignItems: 'flex-end' }}>
               <Small>Target</Small>
               <Body>
-                {low}–{high}
+                {fmtBg(low, unit, false)}–{fmtBg(high, unit, false)}
               </Body>
             </View>
           </Row>
@@ -128,7 +124,7 @@ export default function ParentHome() {
           <Chip label="24 hours" selected={hours === 24} onPress={() => setHours(24)} />
           <Chip label="14 days" selected={hours === 336} onPress={() => setHours(336)} />
         </Row>
-        <GlucoseChart readings={readings} hours={hours} now={now} low={low} high={high} markers={hours === 24 ? markers : []} />
+        <GlucoseChart readings={readings} hours={hours} now={now} low={low} high={high} markers={hours === 24 ? markers : []} unit={unit} />
       </Card>
 
       <View style={styles.stats}>
@@ -140,14 +136,19 @@ export default function ParentHome() {
       </View>
 
       <Row>
-        <Button title="Dose helper" emoji="🧮" style={{ flex: 1 }} onPress={() => router.navigate('/parent/dose')} />
-        <Button title="High five" emoji="🙌" variant="sun" style={{ flex: 1 }} onPress={highFive} loading={highFiving} />
+        <Button title="Dose helper" icon="calculator" style={{ flex: 1 }} onPress={() => router.navigate('/parent/dose')} />
+        <Button title="High five" icon="hand-clap" variant="sun" style={{ flex: 1 }} onPress={highFive} loading={highFiving} />
       </Row>
 
       {latestNote ? (
         <Pressable onPress={() => router.navigate('/parent/inbox')}>
           <Card tint={C.primarySoft}>
-            <Small color={C.primaryDark}>🩺 {latestNote.title} · {timeAgo(latestNote.created_at, now)}</Small>
+            <Row style={{ gap: 6 }}>
+              <Icon name="doctor" size={18} color={C.primaryDark} />
+              <Small color={C.primaryDark}>
+                {latestNote.title} · {timeAgo(latestNote.created_at, now)}
+              </Small>
+            </Row>
             <Body numberOfLines={3}>{latestNote.body}</Body>
           </Card>
         </Pressable>
@@ -163,9 +164,10 @@ export default function ParentHome() {
         {recent.length === 0 ? <Small>Nothing logged yet.</Small> : null}
         {recent.map((e) => (
           <Row key={e.client_id} style={styles.recent}>
-            <Text style={{ fontSize: 20 }}>{eventEmoji(e)}</Text>
-            <Body style={{ flex: 1 }}>{eventTitle(e)}</Body>
-            <Small>{e.id ? '' : '☁️ '}{timeAgo(e.ts, now)}</Small>
+            <IconTile name={EVENT_ICON[e.type].icon} color={EVENT_ICON[e.type].color} tint={EVENT_ICON[e.type].tint} size={34} radius={R.sm} />
+            <Body style={{ flex: 1 }}>{eventTitle(e, unit)}</Body>
+            {e.id ? null : <Icon name="cloud-upload" size={15} color={C.inkSoft} />}
+            <Small>{timeAgo(e.ts, now)}</Small>
           </Row>
         ))}
       </Card>
@@ -182,10 +184,10 @@ async function refreshFamily() {
 }
 
 const styles = StyleSheet.create({
-  big: { fontFamily: FONT, fontSize: 52, fontWeight: '800', lineHeight: 58 },
+  big: { ...font('900'), fontSize: 52, lineHeight: 58 },
   stats: { flexDirection: 'row', flexWrap: 'wrap', gap: S.sm },
   stat: { flexBasis: '30%', flexGrow: 1, backgroundColor: C.card, borderRadius: R.md, padding: S.sm, alignItems: 'center' },
-  statValue: { fontFamily: FONT, fontSize: 20, fontWeight: '800', color: C.ink },
+  statValue: { ...font('800'), fontSize: 20, color: C.ink },
   recent: { paddingVertical: 6, borderBottomWidth: 1, borderBottomColor: C.line },
-  code: { fontFamily: FONT, fontSize: 40, fontWeight: '800', color: C.primary, letterSpacing: 6, textAlign: 'center', marginVertical: S.sm },
+  code: { ...font('800'), fontSize: 40, color: C.primary, letterSpacing: 6, textAlign: 'center', marginVertical: S.sm },
 });

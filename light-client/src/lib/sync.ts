@@ -40,6 +40,7 @@ async function run(): Promise<void> {
     }
   } catch (e) {
     if (e instanceof NetworkError) useStore.getState().setFlags({ online: false });
+    else if (e instanceof ApiError && e.status === 401) return; // session ended; api() already signed out
     else if (e instanceof ApiError && e.status === 400) useStore.getState().setFlags({ online: true });
     else console.warn('sync failed', e);
   } finally {

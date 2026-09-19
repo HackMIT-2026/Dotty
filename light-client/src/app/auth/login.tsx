@@ -1,4 +1,5 @@
 import { Link } from 'expo-router';
+import type { IconName } from '@/components/icon';
 import { useState } from 'react';
 import { Pressable, View } from 'react-native';
 
@@ -6,12 +7,12 @@ import { Dotty } from '@/components/pet/dotty';
 import { ServerField } from '@/components/server-field';
 import { Body, Button, Card, Field, H1, Row, Screen, Small } from '@/components/ui';
 import { C, S } from '@/constants/theme';
-import { errorText } from '@/lib/api';
+import { NetworkError, authErrorText } from '@/lib/api';
 import { login } from '@/lib/session';
 
-const DEMO = [
-  { label: 'Maya (child)', email: 'child@dotty.demo', emoji: '🧒' },
-  { label: 'Alex (parent)', email: 'parent@dotty.demo', emoji: '🧑' },
+const DEMO: { label: string; email: string; icon: IconName }[] = [
+  { label: 'Maya (child)', email: 'child@dotty.demo', icon: 'human-child' },
+  { label: 'Alex (parent)', email: 'parent@dotty.demo', icon: 'account-heart' },
 ];
 
 export default function Login() {
@@ -27,7 +28,8 @@ export default function Login() {
     try {
       await login(e, p);
     } catch (err) {
-      setError(errorText(err));
+      setError(authErrorText(err));
+      if (err instanceof NetworkError) setShowServer(true);
     } finally {
       setBusy(null);
     }
@@ -62,7 +64,7 @@ export default function Login() {
             <Button
               key={d.email}
               title={d.label}
-              emoji={d.emoji}
+              icon={d.icon}
               variant="sun"
               loading={busy === d.email}
               onPress={() => submit(d.email, 'demo1234', d.email)}

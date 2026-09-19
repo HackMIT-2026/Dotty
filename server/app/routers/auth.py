@@ -4,7 +4,7 @@ from fastapi import APIRouter, Depends, HTTPException
 
 from .. import db
 from ..auth import current_user, family_of, hash_password, make_token, require_role, verify_password
-from ..models import LoginIn, RegisterIn
+from ..models import FamilySettingsIn, LoginIn, RegisterIn
 from ..services import gamification
 from ..util import DEFAULT_TZ, new_id, now, pub
 
@@ -33,6 +33,7 @@ def _family_view(fam: dict | None) -> dict | None:
         "id": fam["_id"],
         "code": fam["code"],
         "tz": fam.get("tz", DEFAULT_TZ),
+        "glucose_unit": fam.get("glucose_unit", "mg/dL"),
         "child": brief(fam.get("child_id")),
         "parents": [brief(p) for p in fam.get("parent_ids", [])],
         "clinician": brief(fam.get("clinician_id")),
@@ -66,7 +67,7 @@ def register(body: RegisterIn):
 
     if body.role == "parent":
         if not fam:
-            fam = {"_id": new_id(), "code": _new_code(), "child_id": None, "parent_ids": [], "clinician_id": None, "tz": body.tz or DEFAULT_TZ, "created_at": now()}
+            fam = {"_id": new_id(), "code": _new_code(), "child_id": None, "parent_ids": [], "clinician_id": None, "tz": body.tz or DEFAULT_TZ, "glucose_unit": "mg/dL", "created_at": now()}
             db.families.insert_one(fam)
         db.families.update_one({"_id": fam["_id"]}, {"$addToSet": {"parent_ids": user["_id"]}})
         user["family_id"] = fam["_id"]
@@ -107,3 +108,13 @@ def me(user: dict = Depends(current_user)):
 def my_family(user: dict = Depends(require_role("parent"))):
     """A parent's family (created at registration). Share its code so the child and clinician can join."""
     return _family_view(family_of(user))
+
+
+@router.put("/families/settings")
+def update_family_settings(body: FamilySettingsIn, user: dict = Depends(require_role("parent"))):
+    """Family preferences. `glucose_unit` changes how glucose is shown and entered everywhere; storage stays mg/dL."""
+    fam = family_of(user)
+    if not fam:
+        raise HTTPException(404, "No family")
+    db.families.update_one({"_id": fam["_id"]}, {"$set": {"glucose_unit": body.glucose_unit}})
+    return _family_view(db.families.find_one({"_id": fam["_id"]}))
