@@ -15,7 +15,7 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-import { C, MAX_WIDTH, R, S, font, shadow } from '@/constants/theme';
+import { BORDER, C, MAX_WIDTH, R, S, font, shadow } from '@/constants/theme';
 
 import { Icon, type IconName } from './icon';
 
@@ -101,10 +101,10 @@ interface ButtonProps {
 }
 
 const VARIANTS = {
-  primary: { bg: C.primary, fg: '#fff' },
+  primary: { bg: C.primary, fg: C.ink },
   sun: { bg: C.sun, fg: C.ink },
-  mint: { bg: C.mint, fg: '#fff' },
-  secondary: { bg: C.primarySoft, fg: C.primaryDark },
+  mint: { bg: C.mint, fg: C.ink },
+  secondary: { bg: C.lavender, fg: C.ink },
   ghost: { bg: 'transparent', fg: C.primaryDark },
 } as const;
 
@@ -175,9 +175,9 @@ export function Pill({ children, bg = C.primarySoft, fg = C.primaryDark, icon }:
 const styles = StyleSheet.create({
   screen: { flex: 1 },
   content: { padding: S.md, gap: S.md, width: '100%', maxWidth: MAX_WIDTH, alignSelf: 'center', paddingBottom: S.xl },
-  card: { backgroundColor: C.card, borderRadius: R.lg, padding: S.md, gap: S.sm, ...shadow },
-  button: { minHeight: 48, borderRadius: R.pill, paddingHorizontal: S.lg, alignItems: 'center', justifyContent: 'center' },
-  buttonLg: { minHeight: 60 },
+  card: { backgroundColor: C.card, borderRadius: R.lg, borderWidth: BORDER, borderColor: C.line, padding: 20, gap: S.sm, ...shadow },
+  button: { minHeight: 48, borderRadius: R.md, paddingHorizontal: S.lg, alignItems: 'center', justifyContent: 'center' },
+  buttonLg: { minHeight: 64 },
   buttonInner: { flexDirection: 'row', alignItems: 'center', gap: S.sm },
   chip: {
     flexDirection: 'row',
@@ -196,7 +196,7 @@ const styles = StyleSheet.create({
     fontSize: 17,
     color: C.ink,
     backgroundColor: C.card,
-    borderWidth: 2,
+    borderWidth: BORDER,
     borderColor: C.line,
     borderRadius: R.md,
     paddingHorizontal: S.md,

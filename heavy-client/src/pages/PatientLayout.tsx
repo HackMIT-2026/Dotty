@@ -66,7 +66,7 @@ export default function PatientLayout() {
               end={end}
               className={({ isActive }) =>
                 `inline-flex items-center gap-2 rounded-full px-4 py-2 text-sm font-extrabold transition ${
-                  isActive ? 'bg-brand text-white' : 'bg-white text-ink-soft hover:text-brand'
+                  isActive ? 'bg-brand text-ink' : 'bg-white text-ink-soft hover:text-brand'
                 }`
               }>
               <Icon size={16} />

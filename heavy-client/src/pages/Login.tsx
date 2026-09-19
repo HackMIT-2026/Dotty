@@ -32,7 +32,7 @@ export default function Login() {
   return (
     <main className="mx-auto flex min-h-screen max-w-md flex-col justify-center gap-5 p-6">
       <div className="flex flex-col items-center gap-2 text-center">
-        <div className="flex size-14 items-center justify-center rounded-2xl bg-brand text-white">
+        <div className="flex size-14 items-center justify-center rounded-[--radius-clinician] bg-brand text-ink">
           <Stethoscope size={28} />
         </div>
         <h1 className="text-3xl font-black">Dotty clinician portal</h1>

@@ -51,7 +51,7 @@ export default function Notes() {
         <H2>Send a note to {patient.name}'s parent</H2>
         <form className="mt-2 flex flex-col gap-3" onSubmit={send}>
           <textarea
-            className="w-full rounded-xl border-2 border-line px-3 py-2 font-semibold outline-none focus:border-brand"
+            className="w-full rounded-[--radius-clinician] border-2 border-line px-3 py-2 font-medium outline-none focus:border-brand"
             rows={3}
             value={text}
             onChange={(e) => setText(e.target.value)}

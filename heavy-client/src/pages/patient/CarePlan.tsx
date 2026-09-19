@@ -46,7 +46,7 @@ function PriorityPicker({ value, onChange }: { value: number; onChange: (n: numb
             onClick={() => onChange(p.value)}
             title={p.hint}
             className={`rounded-full px-3 py-2 text-sm font-extrabold transition ${
-              value === p.value ? 'bg-brand text-white' : 'bg-line text-ink-soft hover:text-brand'
+              value === p.value ? 'bg-brand text-ink' : 'bg-line text-ink-soft hover:text-brand'
             }`}>
             {p.label}
           </button>
@@ -134,7 +134,7 @@ function TaskForm({ draft, onChange, onSave, onCancel, busy }: {
                       const next = current.includes(i) ? current.filter((x) => x !== i) : [...current, i].sort();
                       set({ days: next.length === 7 ? [] : next });
                     }}
-                    className={`size-9 rounded-full text-xs font-extrabold ${on ? 'bg-brand text-white' : 'bg-line text-ink-soft'}`}>
+                    className={`size-9 rounded-full text-xs font-semibold ${on ? 'bg-brand text-ink' : 'bg-line text-ink-soft'}`}>
                     {d[0]}
                   </button>
                 );
@@ -189,7 +189,7 @@ function questPreview(draft: TaskDraft): string {
 const rewardPreview = (importance: number) => ({ 1: 15, 2: 25, 3: 40 })[importance as 1 | 2 | 3] ?? 25;
 
 const CELL = {
-  done: { className: 'bg-good text-white', icon: <Check size={14} /> },
+  done: { className: 'bg-mint text-ink', icon: <Check size={14} /> },
   missed: { className: 'bg-bad-soft text-bad', icon: <X size={14} /> },
   pending: { className: 'bg-warn-soft text-[#B7791F]', icon: <Minus size={14} /> },
 } as const;
@@ -256,8 +256,8 @@ export default function CarePlan() {
           <div>
             <H2>Daily care plan</H2>
             <p className="text-sm text-ink-soft">
-              Each task becomes a quest in {patient.name}'s app and a checklist item for the parent. Rewards and importance decide how much
-              Dotty cares.
+              Each task becomes a quest in {patient.name}'s app and a checklist item for the parent. Priority decides how much the
+              quest is worth and how strongly Pip reacts.
             </p>
           </div>
           <Button icon={<Plus size={16} />} onClick={() => { setDraft(EMPTY); setEditing('new'); }}>

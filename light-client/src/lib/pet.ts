@@ -3,7 +3,7 @@ import { C } from '@/constants/theme';
 
 import type { Pet } from './types';
 
-export const DEFAULT_EQUIPPED: Pet['equipped'] = { color: 'color_sky', hat: null, accessory: null, background: 'bg_day' };
+export const DEFAULT_EQUIPPED: Pet['equipped'] = { color: 'color_sky', hat: null, accessory: null, background: 'bg_underwater' };
 
 export const BADGES: Record<string, { name: string; icon: IconName; color: string; tint: string; how: string }> = {
   first_week: { name: 'First Week', icon: 'calendar-star', color: C.primary, tint: C.primarySoft, how: 'Check-ups 7 days in a row' },

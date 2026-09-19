@@ -19,6 +19,7 @@ CATALOG = [
     ("acc_scarf", "accessory", "Scarf", 70, "common", None),
     ("acc_headphones", "accessory", "Headphones", 120, "rare", None),
     ("acc_cape", "accessory", "Hero Cape", 180, "epic", "sport_star"),
+    ("bg_underwater", "background", "Pip's Pond", 0, "common", None),
     ("bg_day", "background", "Sunny Day", 0, "common", None),
     ("bg_night", "background", "Starry Night", 80, "common", None),
     ("bg_beach", "background", "Beach", 100, "rare", None),

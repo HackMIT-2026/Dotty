@@ -1,9 +1,5 @@
 import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
-// Per-weight imports so only the 4 weights we use are bundled (the package root pulls in all 18).
-import { Nunito_600SemiBold } from '@expo-google-fonts/nunito/600SemiBold';
-import { Nunito_700Bold } from '@expo-google-fonts/nunito/700Bold';
-import { Nunito_800ExtraBold } from '@expo-google-fonts/nunito/800ExtraBold';
-import { Nunito_900Black } from '@expo-google-fonts/nunito/900Black';
+// Fredoka ships with the app (assets/fonts), so the design system's font works offline too.
 import { useFonts } from 'expo-font';
 import { Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
@@ -30,10 +26,10 @@ export default function RootLayout() {
   const hydrated = useHydrated();
   // Bundled with the app, so they load offline too. If a font fails, render anyway with the system font.
   const [fontsLoaded, fontError] = useFonts({
-    Nunito_600SemiBold,
-    Nunito_700Bold,
-    Nunito_800ExtraBold,
-    Nunito_900Black,
+    Fredoka400: require('@/assets/fonts/Fredoka-400.ttf'),
+    Fredoka500: require('@/assets/fonts/Fredoka-500.ttf'),
+    Fredoka600: require('@/assets/fonts/Fredoka-600.ttf'),
+    Fredoka700: require('@/assets/fonts/Fredoka-700.ttf'),
     ...MaterialCommunityIcons.font,
   });
   const ready = hydrated && (fontsLoaded || !!fontError);

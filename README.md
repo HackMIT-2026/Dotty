@@ -8,6 +8,10 @@ A Tamagotchi-style companion that turns Type 1 diabetes care into looking after 
 | `light-client/` | Family app (child + parent roles) | Expo / React Native |
 | `heavy-client/` | Clinician portal: care plan, charts, notes | React + Vite + Tailwind |
 
+The look comes from the design system on the `gloria` branch (Figma tokens: Fredoka, the cream/coral palette,
+24px cards) and Pip, the pet artwork. `light-client/src/constants/theme.ts` and `heavy-client/src/index.css` hold
+the tokens — never type a hex code outside those two files.
+
 ## Run it (two terminals)
 
 Needs MongoDB running locally (`brew services start mongodb-community`), Python 3.12+ and Node 22+.

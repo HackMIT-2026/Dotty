@@ -1,25 +1,65 @@
 @import 'tailwindcss';
 
-/* Same palette and font as the family app (light-client/src/constants/theme.ts). */
+/*
+ * Dotty's design tokens, from the design system on the `gloria` branch
+ * (heavy-client/src/theme/tokens.css, taken from Figma). Fredoka is bundled as an asset so it works offline.
+ * Clinician screens use the same palette with tighter radii and 16px text.
+ */
+
+@font-face {
+  font-family: 'Fredoka';
+  font-weight: 400;
+  font-display: swap;
+  src: url('./assets/fonts/Fredoka-400.ttf') format('truetype');
+}
+@font-face {
+  font-family: 'Fredoka';
+  font-weight: 500;
+  font-display: swap;
+  src: url('./assets/fonts/Fredoka-500.ttf') format('truetype');
+}
+@font-face {
+  font-family: 'Fredoka';
+  font-weight: 600;
+  font-display: swap;
+  src: url('./assets/fonts/Fredoka-600.ttf') format('truetype');
+}
+@font-face {
+  font-family: 'Fredoka';
+  font-weight: 700;
+  font-display: swap;
+  src: url('./assets/fonts/Fredoka-700.ttf') format('truetype');
+}
+
 @theme {
-  --font-sans: 'Nunito', ui-sans-serif, system-ui, sans-serif;
-  --color-ink: #2b2650;
-  --color-ink-soft: #6e6a8f;
-  --color-line: #e6e2f5;
-  --color-canvas: #f5f3ff;
-  --color-brand: #6c5ce7;
-  --color-brand-dark: #5647c9;
-  --color-brand-soft: #ece9fd;
-  --color-good: #2fb67c;
-  --color-good-soft: #ddf7ec;
-  --color-warn: #f5a524;
-  --color-warn-soft: #fff1d6;
-  --color-bad: #e5534b;
-  --color-bad-soft: #fde8e7;
-  --color-sky: #4da8ff;
-  --color-sky-soft: #e3f1ff;
+  --font-sans: 'Fredoka', system-ui, sans-serif;
+
+  --color-ink: #2b2a33;
+  --color-ink-soft: #6b6875;
+  --color-line: #eadfd3;
+  --color-canvas: #fff8f0;
+  --color-brand: #f28b82; /* coral */
+  --color-brand-dark: #e56b8a; /* gill rose */
+  --color-brand-soft: #fdedeb;
+  --color-lavender: #b8a9e8;
+  --color-lavender-soft: #f1edfb;
+  --color-good: #1f7a5c;
+  --color-good-soft: #eaf8f1;
+  --color-mint: #a8e0c8;
+  --color-warn: #96651b;
+  --color-warn-soft: #fdf3e3;
+  --color-amber: #f5c26b;
+  --color-bad: #d9534f;
+  --color-bad-soft: #fbe9e8;
+  --color-sky: #a9d8ee; /* pond blue */
+  --color-sky-soft: #edf7fc;
+
+  /* clinician screens: 8px corners and 16px text (the child app uses 16-24px corners) */
+  --radius-clinician: 8px;
 }
 
 body {
   @apply bg-canvas text-ink font-sans;
+  font-size: 16px;
+  line-height: 24px;
 }

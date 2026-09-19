@@ -1,3 +1,4 @@
+import { Image } from 'expo-image';
 import type { ReactNode } from 'react';
 import { StyleSheet, View, type StyleProp, type ViewStyle } from 'react-native';
 import Svg, { Circle, Ellipse, G, Path, Rect } from 'react-native-svg';
@@ -78,12 +79,19 @@ function Backdrop({ id }: { id: string }) {
   }
 }
 
+/** Pip's pond: the painted background from the design branch. */
+const UNDERWATER = require('@/assets/background/underwater_wide.png');
+
 export function PetScene({ background, children, style }: { background: string; children?: ReactNode; style?: StyleProp<ViewStyle> }) {
   return (
     <View style={[styles.scene, style]}>
-      <Svg style={StyleSheet.absoluteFill} viewBox="0 0 400 300" preserveAspectRatio="xMidYMid slice">
-        <Backdrop id={background} />
-      </Svg>
+      {background === 'bg_underwater' ? (
+        <Image source={UNDERWATER} style={StyleSheet.absoluteFill} contentFit="cover" transition={200} />
+      ) : (
+        <Svg style={StyleSheet.absoluteFill} viewBox="0 0 400 300" preserveAspectRatio="xMidYMid slice">
+          <Backdrop id={background} />
+        </Svg>
+      )}
       {children}
     </View>
   );

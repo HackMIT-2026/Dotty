@@ -1,54 +1,76 @@
 import { Platform } from 'react-native';
 
+/**
+ * Dotty's design tokens, from the design system on the `gloria` branch
+ * (heavy-client/src/theme/tokens.css, itself taken from Figma): cream page, coral primary,
+ * lavender and pond blue accents, mint for success, amber for gentle attention, and Fredoka.
+ * Never type a hex code outside this file.
+ */
 export const C = {
-  bg: '#F5F3FF',
+  bg: '#FFF8F0', // cream page background
   card: '#FFFFFF',
-  ink: '#2B2650',
-  inkSoft: '#6E6A8F',
-  line: '#E6E2F5',
-  primary: '#6C5CE7',
-  primaryDark: '#5647C9',
-  primarySoft: '#ECE9FD',
-  sky: '#4DA8FF',
-  skySoft: '#E3F1FF',
-  mint: '#2FBF8F',
-  mintSoft: '#DDF7EC',
-  sun: '#FFB93B',
-  sunSoft: '#FFF1D6',
-  pink: '#FF7EB6',
-  pinkSoft: '#FFE4F0',
-  // status colors are only used in the parent app: the child UI never shows red
-  good: '#2FB67C',
-  warn: '#F5A524',
-  danger: '#E5534B',
-  dangerSoft: '#FDE8E7',
+  ink: '#2B2A33',
+  inkSoft: '#6B6875',
+  line: '#EADFD3', // card borders
+  primary: '#F28B82', // coral: main buttons, Pip's body
+  primaryDark: '#E56B8A', // gill rose: pressed states and headings on soft fills
+  primarySoft: '#FDEDEB',
+  lavender: '#B8A9E8', // accent, soft buttons, banners
+  lavenderSoft: '#F1EDFB',
+  sky: '#A9D8EE', // pond blue: chips, water, info
+  skySoft: '#EDF7FC',
+  mint: '#A8E0C8', // success fills, always with a check icon
+  mintInk: '#1F7A5C', // readable success text on white
+  mintSoft: '#EAF8F1',
+  sun: '#F5C26B', // sunny amber: gentle attention, with a clock icon
+  sunInk: '#96651B',
+  sunSoft: '#FDF3E3',
+  pink: '#E56B8A',
+  pinkSoft: '#FBE7EC',
+  // status colors are only used in the parent and clinician views: the child UI never shows red
+  good: '#1F7A5C',
+  warn: '#96651B',
+  danger: '#D9534F',
+  dangerSoft: '#FBE9E8',
 } as const;
 
 export const S = { xs: 4, sm: 8, md: 16, lg: 24, xl: 32 } as const;
-export const R = { sm: 10, md: 16, lg: 24, pill: 999 } as const;
+/** Radius scale from the design system: cards 24, buttons 16, pills round. */
+export const R = { sm: 12, md: 16, lg: 24, pill: 999 } as const;
+export const BORDER = 2;
 
-/** Nunito (Google Fonts), loaded in the root layout. One family per weight so Android renders weights correctly. */
+/**
+ * Fredoka (bundled under assets/fonts, so it works offline), loaded in the root layout.
+ * One family per weight, because a custom font on Android does not synthesise weights.
+ */
 export const F = {
-  medium: 'Nunito_600SemiBold',
-  bold: 'Nunito_700Bold',
-  heavy: 'Nunito_800ExtraBold',
-  black: 'Nunito_900Black',
+  regular: 'Fredoka400',
+  medium: 'Fredoka500',
+  bold: 'Fredoka600',
+  heavy: 'Fredoka700',
 } as const;
 
 type Weight = '500' | '600' | '700' | '800' | '900';
-const WEIGHT: Record<Weight, string> = { '500': F.medium, '600': F.medium, '700': F.bold, '800': F.heavy, '900': F.black };
+const WEIGHT: Record<Weight, string> = {
+  '500': F.regular,
+  '600': F.medium,
+  '700': F.medium,
+  '800': F.bold,
+  '900': F.heavy,
+};
 
-/** Style for a Nunito weight, e.g. `{ ...font('800'), fontSize: 20 }`. */
+/** Style for a weight, e.g. `{ ...font('800'), fontSize: 20 }`. */
 export const font = (w: Weight = '600') => ({ fontFamily: WEIGHT[w] });
 
 export const MAX_WIDTH = 560;
 
+/** The design system has exactly one shadow: y 4, blur 12, black at 8 percent. */
 export const shadow = Platform.select({
-  web: { boxShadow: '0 4px 14px rgba(43, 38, 80, 0.08)' } as object,
+  web: { boxShadow: '0 4px 12px rgba(0, 0, 0, 0.08)' } as object,
   default: {
-    shadowColor: '#2B2650',
+    shadowColor: '#000000',
     shadowOpacity: 0.08,
-    shadowRadius: 10,
+    shadowRadius: 12,
     shadowOffset: { width: 0, height: 4 },
     elevation: 2,
   },

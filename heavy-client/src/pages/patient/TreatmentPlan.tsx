@@ -197,7 +197,7 @@ export default function TreatmentPlan() {
       <Card>
         <H2>Notes on the plan</H2>
         <textarea
-          className="mt-2 w-full rounded-xl border-2 border-line px-3 py-2 font-semibold outline-none focus:border-brand"
+          className="mt-2 w-full rounded-[--radius-clinician] border-2 border-line px-3 py-2 font-medium outline-none focus:border-brand"
           rows={3}
           value={draft.notes}
           onChange={(e) => set({ notes: e.target.value })}
