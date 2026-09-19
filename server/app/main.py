@@ -4,7 +4,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from . import db
-from .routers import auth, dose, notifications, pet, patients, simulator, sync
+from .routers import auth, dose, notifications, pet, patients, simulator, sync, tasks
 from .services import alerts, shop
 
 
@@ -21,7 +21,7 @@ app = FastAPI(title="Dotty API", version="0.1.0", lifespan=lifespan)
 # Demo setup: the Expo web build and the clinician portal run on other origins.
 app.add_middleware(CORSMiddleware, allow_origins=["*"], allow_methods=["*"], allow_headers=["*"])
 
-for module in (auth, sync, patients, dose, pet, notifications, simulator):
+for module in (auth, sync, patients, tasks, dose, pet, notifications, simulator):
     app.include_router(module.router)
 
 

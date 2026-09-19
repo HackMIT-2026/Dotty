@@ -6,7 +6,8 @@ from .. import db
 from ..auth import check_access, current_user, family_of_patient, require_role
 from ..models import NoteIn, PlanIn
 from ..services.alerts import notify, recipients
-from ..util import new_id, now, pub
+from ..services import tasks as care
+from ..util import new_id, now, pub, zone
 
 router = APIRouter(tags=["patients"])
 
@@ -33,6 +34,8 @@ def _summary(pid: str) -> dict:
         "readings_count": len(values),
         "last_reading": {"bg_mgdl": last["data"]["bg_mgdl"], "ts": last["ts"]} if last else None,
         "plan_version": plan["version"] if plan else None,
+        "adherence_pct": care.adherence(pid, SUMMARY_DAYS, zone(fam.get("tz")), now())["rate_pct"],
+        "tasks_count": len(care.active_tasks(pid)),
         "open_alerts": db.notifications.count_documents(
             {"user_id": fam.get("clinician_id"), "read_at": None, "data.patient_id": pid}
         ),
@@ -100,6 +103,20 @@ def put_plan(patient_id: str, body: PlanIn, user: dict = Depends(require_role("c
 def list_notes(patient_id: str, user: dict = Depends(current_user)):
     check_access(user, patient_id)
     return [pub(n) for n in db.notes.find({"patient_id": patient_id}).sort("created_at", -1).limit(100)]
+
+
+@router.delete("/patients/{patient_id}/notes/{note_id}")
+def delete_note(patient_id: str, note_id: str, user: dict = Depends(require_role("clinician"))):
+    """Take a note back. The parent's notification for it goes too, so a mistake does not linger on their phone."""
+    check_access(user, patient_id)
+    note = db.notes.find_one({"_id": note_id, "patient_id": patient_id})
+    if not note:
+        raise HTTPException(404, "No such note")
+    if note["clinician_id"] != user["_id"]:
+        raise HTTPException(403, "Only the clinician who wrote the note can remove it")
+    db.notes.delete_one({"_id": note_id})
+    db.notifications.delete_many({"data.note_id": note_id})
+    return {"ok": True}
 
 
 @router.post("/patients/{patient_id}/notes")

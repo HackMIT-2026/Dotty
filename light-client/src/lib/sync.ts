@@ -121,11 +121,10 @@ async function pull(): Promise<void> {
     }
   }
 
-  const plan = res.plan;
-  const stamp = plan ? `${plan.id}:${plan.version}` : 'none';
+  const stamp = (res.tasks ?? []).map((t) => `${t.id}:${t.time}:${t.quest_title}`).join('|');
   if (role === 'child' && stamp !== remindersFor) {
     remindersFor = stamp;
-    void scheduleReminders(plan);
+    void scheduleReminders(res.tasks ?? []);
   }
 }
 

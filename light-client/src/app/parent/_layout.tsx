@@ -9,12 +9,12 @@ export default function ParentTabs() {
   return (
     <Tabs screenOptions={tabScreenOptions(C.primary)}>
       <Tabs.Screen name="index" options={{ title: 'Today', tabBarIcon: tabIcon('chart-line', 'chart-line') }} />
-      <Tabs.Screen name="dose" options={{ title: 'Dose helper', tabBarIcon: tabIcon('calculator', 'calculator') }} />
+      <Tabs.Screen name="care-plan" options={{ title: 'Care plan', tabBarIcon: tabIcon('clipboard-check', 'clipboard-check-outline') }} />
       <Tabs.Screen
         name="inbox"
         options={{ title: 'Inbox', tabBarBadge: unread > 0 ? unread : undefined, tabBarIcon: tabIcon('bell', 'bell-outline') }}
       />
-      <Tabs.Screen name="plan" options={{ title: 'Plan', tabBarIcon: tabIcon('clipboard-text', 'clipboard-text-outline') }} />
+      <Tabs.Screen name="plan" options={{ title: 'Settings', tabBarIcon: tabIcon('tune', 'tune-variant') }} />
     </Tabs>
   );
 }

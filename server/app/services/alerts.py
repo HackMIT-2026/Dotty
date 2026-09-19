@@ -6,7 +6,8 @@ import threading
 from datetime import timedelta
 
 from .. import db
-from ..util import at_local, fmt_bg, new_id, now, zone
+from ..util import fmt_bg, new_id, now, zone
+from . import tasks as care
 
 log = logging.getLogger("dotty.alerts")
 
@@ -14,7 +15,7 @@ OUT_OF_RANGE_LOW = 70
 OUT_OF_RANGE_HIGH = 250
 URGENT_LOW = 54
 SUSTAINED_HIGH = 300
-MISSED_LOOKBACK = timedelta(hours=3)  # only alert about reminders that lapsed recently
+MISSED_LOOKBACK = timedelta(hours=3)  # only alert about tasks whose window closed recently
 STALE_READING = timedelta(hours=3)  # readings synced long after the fact don't alert
 
 
@@ -80,7 +81,7 @@ def check_reading(patient_id: str, bg: float, ts) -> None:
         notify(uid, "out_of_range", title, body, {**data, "severity": "high" if bg < URGENT_LOW else "medium"}, dedupe=f"{key}:{uid}")
 
 
-def raise_missed(patient_id: str, label: str, date_str: str, key: str) -> bool:
+def raise_missed(patient_id: str, label: str, date_str: str, key: str, body: str | None = None) -> bool:
     """Create the missed-treatment alert for parents; returns True if it was new."""
     _, parents, clinician = recipients(patient_id)
     name = _name(patient_id)
@@ -89,9 +90,9 @@ def raise_missed(patient_id: str, label: str, date_str: str, key: str) -> bool:
         nid = notify(
             uid,
             "missed_treatment",
-            f"{name} missed the {label}",
-            f"No check-up was logged for the {label}. A quick reminder might help.",
-            {"patient_id": patient_id, "date": date_str, "reminder": key},
+            f"{name} missed {label}",
+            body or f"Nothing was logged for {label}. A quick reminder might help.",
+            {"patient_id": patient_id, "date": date_str, "task_id": key},
             dedupe=f"missed:{patient_id}:{date_str}:{key}",
         )
         created = created or nid is not None
@@ -103,33 +104,68 @@ def raise_missed(patient_id: str, label: str, date_str: str, key: str) -> bool:
             notify(
                 clinician,
                 "out_of_range",
-                f"{name} missed 2 check-ups today",
-                f"{name} has missed {missed_today} scheduled check-ups today.",
+                f"{name} missed 2 care-plan tasks today",
+                f"{name} has missed {missed_today} tasks of the care plan today.",
                 {"patient_id": patient_id, "date": date_str, "severity": "high"},
                 dedupe=f"missed2:{patient_id}:{date_str}",
             )
     return created
 
 
-def _reminder_label(r: dict) -> str:
-    return r.get("label") or {"check": "check-up", "meal": "meal check", "bedtime": "bedtime check"}[r["kind"]] + f" ({r['time']})"
-
-
-def _check_missed(patient_id: str, plan: dict, tz_name: str, at) -> None:
+def _check_missed(patient_id: str, tz_name: str | None, at) -> None:
+    """Alert parents shortly after a doctor task's window closes with nothing logged, and send the day's summary."""
     tz = zone(tz_name)
     local = at.astimezone(tz)
-    for r in plan.get("reminders", []):
-        start = at_local(local.date(), r["time"], tz)
-        window = timedelta(minutes=r.get("window_min", 60))
-        deadline = start + window
-        if not (deadline < local <= deadline + MISSED_LOOKBACK):
+    day = local.date()
+    summary = care.day_summary(patient_id, day, tz, at)
+    if not summary:
+        return
+    for s in summary:
+        t = s["task"]
+        if not t.get("time") or s["status"] != "missed":
             continue
-        types = ["reading", "meal"] if r["kind"] == "meal" else ["reading"]
-        found = db.events.find_one(
-            {"patient_id": patient_id, "type": {"$in": types}, "ts": {"$gte": start - window, "$lte": deadline}}
+        deadline = care.window(t, day, tz)[1]
+        if deadline < local <= deadline + MISSED_LOOKBACK:
+            detail = f" {t['instructions']}" if t.get("instructions") else ""
+            raise_missed(
+                patient_id,
+                f"{t['title']} ({t['time']})",
+                day.isoformat(),
+                t["_id"],
+                f"Nothing was logged for {t['title']} at {t['time']} today.{detail}",
+            )
+    _daily_summary(patient_id, summary, day, tz, local)
+
+
+def _daily_summary(patient_id: str, summary: list[dict], day, tz, local) -> None:
+    """Once the last timed task's window has closed: "3 of 4 care-plan tasks done today"."""
+    timed = [s for s in summary if s["task"].get("time")]
+    if not timed:
+        return
+    last_close = max(care.window(s["task"], day, tz)[1] for s in timed)
+    if not (last_close < local <= last_close + MISSED_LOOKBACK):
+        return
+    _, parents, _ = recipients(patient_id)
+    name = _name(patient_id)
+    done = [s for s in summary if s["status"] == "done"]
+    missed = [s["task"]["title"] for s in summary if s["status"] != "done"]
+    body = "Everything on the plan was done. Great teamwork!" if not missed else "Not done: " + ", ".join(missed) + "."
+    for uid in parents:
+        notify(
+            uid,
+            "care_summary",
+            f"{name}'s care plan today: {len(done)} of {len(summary)} done",
+            body,
+            {"patient_id": patient_id, "date": day.isoformat(), "done": len(done), "total": len(summary)},
+            dedupe=f"summary:{patient_id}:{day.isoformat()}",
         )
-        if not found:
-            raise_missed(patient_id, _reminder_label(r), local.date().isoformat(), r["time"])
+
+
+def plan_changed(patient_id: str, clinician_name: str, change: str) -> None:
+    """Tell parents the doctor changed the care plan (they see the details in the app's Care plan tab)."""
+    _, parents, _ = recipients(patient_id)
+    for uid in parents:
+        notify(uid, "clinician_note", "Care plan updated", f"{clinician_name} {change}", {"patient_id": patient_id})
 
 
 def _check_sustained_high(patient_id: str, at) -> None:
@@ -157,9 +193,7 @@ def _check_sustained_high(patient_id: str, at) -> None:
 def run_checks(at=None) -> None:
     at = at or now()
     for fam in db.families.find({"child_id": {"$ne": None}}):
-        plan = db.plans.find_one({"patient_id": fam["child_id"]})
-        if plan:
-            _check_missed(fam["child_id"], plan, fam.get("tz"), at)
+        _check_missed(fam["child_id"], fam.get("tz"), at)
         _check_sustained_high(fam["child_id"], at)
 
 

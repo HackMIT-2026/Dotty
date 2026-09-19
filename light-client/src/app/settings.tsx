@@ -1,52 +1,76 @@
 import { useState } from 'react';
 import { Switch, Text, View } from 'react-native';
 
+import { Icon } from '@/components/icon';
+import { PIN_LENGTH, PinPad } from '@/components/pin-pad';
 import { ServerField } from '@/components/server-field';
-import { Body, Button, Card, Chip, H2, Row, Screen, Small } from '@/components/ui';
+import { GlucoseUnitToggle } from '@/components/unit-toggle';
+import { Body, Button, Card, H2, Row, Screen, Small } from '@/components/ui';
 import { C, S, font } from '@/constants/theme';
 import { api, errorText } from '@/lib/api';
 import { useStore } from '@/lib/store';
 import { syncNow } from '@/lib/sync';
-import type { Family } from '@/lib/types';
-import { type GlucoseUnit, fmtBg, useGlucoseUnit } from '@/lib/units';
+import { fmtBg, useGlucoseUnit } from '@/lib/units';
 
-/** The parent chooses how glucose is shown and typed for the whole family (the child's phone follows). */
+/** Parents change the unit here or on the Today page; children only see which unit is used. */
 function GlucoseUnitCard({ isParent }: { isParent: boolean }) {
   const unit = useGlucoseUnit();
-  const setGlucoseUnit = useStore((s) => s.setGlucoseUnit);
-  const pushToast = useStore((s) => s.pushToast);
-  const [saving, setSaving] = useState<GlucoseUnit | null>(null);
-
-  async function choose(next: GlucoseUnit) {
-    if (next === unit || saving) return;
-    setSaving(next);
-    try {
-      await api<Family>('/families/settings', { method: 'PUT', body: { glucose_unit: next } });
-      setGlucoseUnit(next);
-      pushToast({ kind: 'info', text: `Glucose now shown in ${next}`, sub: 'Your child’s app switches at its next sync.' });
-    } catch (e) {
-      pushToast({ kind: 'alert', text: 'Unit not changed', sub: errorText(e) });
-    } finally {
-      setSaving(null);
-    }
-  }
-
   return (
     <Card>
       <H2>Glucose units</H2>
       {isParent ? (
         <>
-          <Row>
-            {(['mg/dL', 'mmol/L'] as const).map((u) => (
-              <Chip key={u} label={saving === u ? `${u}…` : u} selected={unit === u} onPress={() => choose(u)} />
-            ))}
-          </Row>
+          <GlucoseUnitToggle />
           <Small>
-            Use the unit your meter shows. Example: {fmtBg(126, 'mg/dL')} = {fmtBg(126, 'mmol/L')}. Applies to your child's app too.
+            Use the unit your meter shows. Example: {fmtBg(126, 'mg/dL')} = {fmtBg(126, 'mmol/L')}. Your child's app switches
+            automatically.
           </Small>
         </>
       ) : (
-        <Small>Glucose is shown in {unit}. Your grown-up can change this.</Small>
+        <Row>
+          <Icon name="lock-outline" size={18} color={C.inkSoft} />
+          <Small style={{ flex: 1 }}>Glucose is shown in {unit}. Only your grown-up can change this.</Small>
+        </Row>
+      )}
+    </Card>
+  );
+}
+
+/** Children sign in with the family code and a 4-digit PIN; parents set or reset it here. */
+function ChildPinCard({ childName }: { childName: string }) {
+  const pushToast = useStore((s) => s.pushToast);
+  const [open, setOpen] = useState(false);
+  const [pin, setPin] = useState('');
+  const [busy, setBusy] = useState(false);
+
+  async function save() {
+    setBusy(true);
+    try {
+      await api('/families/child-pin', { method: 'PUT', body: { pin } });
+      pushToast({ kind: 'info', text: `${childName}'s secret number updated`, sub: `They sign in with the family code and ${pin}.` });
+      setPin('');
+      setOpen(false);
+    } catch (e) {
+      pushToast({ kind: 'alert', text: 'Not changed', sub: errorText(e) });
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  return (
+    <Card>
+      <H2>{childName}'s sign-in</H2>
+      <Small>{childName} signs in with the family code and a 4-digit secret number — no email, no password.</Small>
+      {open ? (
+        <>
+          <PinPad value={pin} onChange={setPin} />
+          <Row>
+            <Button title="Cancel" variant="ghost" onPress={() => { setOpen(false); setPin(''); }} />
+            <Button title="Save number" icon="check-bold" onPress={save} loading={busy} disabled={pin.length < PIN_LENGTH} />
+          </Row>
+        </>
+      ) : (
+        <Button title="Set a new secret number" icon="lock-reset" variant="secondary" onPress={() => setOpen(true)} />
       )}
     </Card>
   );
@@ -64,10 +88,8 @@ export default function Settings() {
     <Screen>
       <Card>
         <H2>{session?.user.name}</H2>
-        <Small>
-          {session?.user.email} · {session?.user.role}
-        </Small>
-        {family ? (
+        <Small>{session?.user.role === 'child' ? 'Kid account · signs in with the family code and a secret number' : `${session?.user.email} · ${session?.user.role}`}</Small>
+        {family && session?.user.role === 'parent' ? (
           <View style={{ marginTop: S.sm }}>
             <Small>Family code (for your child and your care team)</Small>
             <Text style={{ ...font('900'), fontSize: 28, color: C.primary, letterSpacing: 4 }}>{family.code}</Text>
@@ -77,6 +99,8 @@ export default function Settings() {
           </View>
         ) : null}
       </Card>
+
+      {session?.user.role === 'parent' && family?.child ? <ChildPinCard childName={family.child.name} /> : null}
 
       <GlucoseUnitCard isParent={session?.user.role === 'parent'} />
 

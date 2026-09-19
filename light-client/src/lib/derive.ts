@@ -4,7 +4,8 @@
  */
 import type { IconName } from '@/components/icon';
 
-import type { DotEvent, Intensity, Mood, Quest } from './types';
+import { planToday } from './tasks';
+import type { CareTask, DotEvent, Mood, Quest } from './types';
 import { fmtBg, type GlucoseUnit } from './units';
 
 const HOUR = 3_600_000;
@@ -12,6 +13,7 @@ export const SLEEPY_AFTER_HOURS = 4;
 
 export const MOOD_MESSAGES: Record<Mood, string> = {
   sleepy: 'Zzz... can you check on me?',
+  waiting: "Let's catch the next quest together!",
   bouncy: "I feel great! Let's play!",
   sluggish: "I'm a little slow today. A walk might help!",
   shaky: 'I feel wobbly. Maybe a snack?',
@@ -32,12 +34,16 @@ export function lastReading(events: DotEvent[]): DotEvent | null {
   return r.length ? r[r.length - 1] : null;
 }
 
-export function moodFor(reading: DotEvent | null, now: number): Mood {
-  if (!reading || now - t(reading) >= SLEEPY_AFTER_HOURS * HOUR) return 'sleepy';
-  const bg = bgOf(reading);
-  if (bg < 70) return 'shaky';
-  if (bg > 180) return 'sluggish';
-  return 'bouncy';
+/** Glucose first, then the doctor's plan, then how long since the last check-up (mirrors gamification.compute_mood). */
+export function moodFor(reading: DotEvent | null, now: number, missedTask = false): Mood {
+  const recent = !!reading && now - t(reading) < SLEEPY_AFTER_HOURS * HOUR;
+  if (recent) {
+    const bg = bgOf(reading!);
+    if (bg < 70) return 'shaky';
+    if (bg > 180) return 'sluggish';
+  }
+  if (missedTask) return 'waiting';
+  return recent ? 'bouncy' : 'sleepy';
 }
 
 export function isToday(ts: string, now: number): boolean {
@@ -50,7 +56,8 @@ export function todaysEvents(events: DotEvent[], now: number): DotEvent[] {
   return events.filter((e) => e.source !== 'simulator' && isToday(e.ts, now));
 }
 
-export function computeQuests(events: DotEvent[], now: number): Quest[] {
+/** Good-habit quests. The generic check-up quest steps aside when the doctor set check-up tasks. */
+export function computeQuests(events: DotEvent[], now: number, hasCheckTasks = false): Quest[] {
   const today = todaysEvents(events, now);
   const checks = today.filter((e) => e.type === 'reading').length;
   const lunches = today.filter((e) => {
@@ -59,7 +66,7 @@ export function computeQuests(events: DotEvent[], now: number): Quest[] {
   }).length;
   const minutes = today.filter((e) => e.type === 'activity').reduce((s, e) => s + (e.data.minutes ?? 0), 0);
   const quests = [
-    { id: 'checks', title: 'Check on Dotty 4 times', target: 4, progress: Math.min(checks, 4) },
+    ...(hasCheckTasks ? [] : [{ id: 'checks', title: 'Check on Dotty 4 times', target: 4, progress: Math.min(checks, 4) }]),
     { id: 'lunch', title: 'Log lunch', target: 1, progress: Math.min(lunches, 1) },
     { id: 'play', title: 'Play outside for 20 min', target: 20, progress: Math.min(minutes, 20) },
   ];
@@ -67,17 +74,20 @@ export function computeQuests(events: DotEvent[], now: number): Quest[] {
 }
 
 /** Dotty's three "needs" as 0..1 meters. Low means "Dotty would like...", never "Dotty is unwell". */
-export function needs(events: DotEvent[], now: number) {
+export function needs(events: DotEvent[], now: number, tasks: CareTask[] = []) {
   const meals = ofType(events, 'meal');
   const lastMeal = meals.length ? t(meals[meals.length - 1]) : null;
   const belly = lastMeal === null ? 0.3 : Math.max(0.15, 1 - (now - lastMeal) / (5 * HOUR));
   const today = todaysEvents(events, now);
   const playMinutes = today.filter((e) => e.type === 'activity').reduce((s, e) => s + (e.data.minutes ?? 0), 0);
+  // Love follows the doctor's plan when there is one, otherwise the day's check-ups.
+  const plan = planToday(tasks, events, now);
   const heartCount = today.filter((e) => e.type === 'reading').length;
+  const heart = plan.adherence === null ? 0.15 + heartCount / 4 : 0.15 + 0.85 * plan.adherence;
   return {
     belly: Math.min(1, belly),
     fun: Math.min(1, 0.2 + playMinutes / 30),
-    heart: Math.min(1, 0.15 + heartCount / 4),
+    heart: Math.min(1, heart),
   };
 }
 
@@ -95,22 +105,12 @@ export function trend(readings: DotEvent[]): 'up' | 'down' | 'flat' | null {
   return 'flat';
 }
 
-/** Highest activity intensity logged in the last 2 hours, for the dose helper's "auto" setting. */
-export function recentActivity(events: DotEvent[], now: number): Intensity | null {
-  const rank: Record<Intensity, number> = { light: 1, moderate: 2, vigorous: 3 };
-  let best: Intensity | null = null;
-  for (const e of events) {
-    if (e.type !== 'activity' || now - t(e) > 2 * HOUR || now - t(e) < -HOUR) continue;
-    const i = (e.data.intensity ?? 'moderate') as Intensity;
-    if (!best || rank[i] > rank[best]) best = i;
-  }
-  return best;
-}
-
 export function eventTitle(e: DotEvent, unit: GlucoseUnit = 'mg/dL'): string {
   switch (e.type) {
     case 'reading':
       return `Glucose ${fmtBg(bgOf(e), unit)}`;
+    case 'task':
+      return 'Care-plan task done';
     case 'meal':
       return `Meal · ${e.data.carbs_g} g carbs`;
     case 'activity':
@@ -131,6 +131,7 @@ export const EVENT_ICON: Record<DotEvent['type'], { icon: IconName; color: strin
   bolus: { icon: 'needle', color: '#2F80ED', tint: '#E3F1FF' },
   basal: { icon: 'needle', color: '#5647C9', tint: '#ECE9FD' },
   pet: { icon: 'paw', color: '#6C5CE7', tint: '#ECE9FD' },
+  task: { icon: 'star-four-points', color: '#D69E2E', tint: '#FFF1D6' },
 };
 
 const cap = (s: string) => s.charAt(0).toUpperCase() + s.slice(1);

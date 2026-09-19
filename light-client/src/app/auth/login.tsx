@@ -1,76 +1,147 @@
 import { Link } from 'expo-router';
-import type { IconName } from '@/components/icon';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Pressable, View } from 'react-native';
 
 import { Dotty } from '@/components/pet/dotty';
+import { PIN_LENGTH, PinPad } from '@/components/pin-pad';
 import { ServerField } from '@/components/server-field';
-import { Body, Button, Card, Field, H1, Row, Screen, Small } from '@/components/ui';
+import { Body, Button, Card, Chip, Field, H1, H2, Row, Screen, Small } from '@/components/ui';
 import { C, S } from '@/constants/theme';
 import { NetworkError, authErrorText } from '@/lib/api';
-import { login } from '@/lib/session';
+import { childLogin, login } from '@/lib/session';
 
-const DEMO: { label: string; email: string; icon: IconName }[] = [
-  { label: 'Maya (child)', email: 'child@dotty.demo', icon: 'human-child' },
-  { label: 'Alex (parent)', email: 'parent@dotty.demo', icon: 'account-heart' },
-];
+type Mode = 'kid' | 'grownup';
+
+const DEMO_FAMILY = 'DEMO42';
+const DEMO_PIN = '1234';
 
 export default function Login() {
+  const [mode, setMode] = useState<Mode>('kid');
+  const [code, setCode] = useState('');
+  const [pin, setPin] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [busy, setBusy] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [showServer, setShowServer] = useState(false);
 
-  async function submit(e = email, p = password, key = 'form') {
+  function fail(err: unknown) {
+    setError(authErrorText(err));
+    if (err instanceof NetworkError) setShowServer(true);
+    setPin('');
+  }
+
+  async function submitKid(c = code, p = pin, key = 'kid') {
     setBusy(key);
     setError(null);
     try {
-      await login(e, p);
+      await childLogin(c, p);
     } catch (err) {
-      setError(authErrorText(err));
-      if (err instanceof NetworkError) setShowServer(true);
+      fail(err);
     } finally {
       setBusy(null);
     }
   }
 
+  async function submitGrownUp(e = email, p = password, key = 'form') {
+    setBusy(key);
+    setError(null);
+    try {
+      await login(e, p);
+    } catch (err) {
+      fail(err);
+    } finally {
+      setBusy(null);
+    }
+  }
+
+  // a full PIN signs in by itself: nothing for a child to hunt for
+  useEffect(() => {
+    if (mode === 'kid' && pin.length === PIN_LENGTH && code.length === 6 && busy === null) void submitKid();
+  }, [pin, code, mode]); // eslint-disable-line react-hooks/exhaustive-deps
+
   return (
     <Screen>
-      <View style={{ alignItems: 'center', marginTop: S.lg }}>
-        <Dotty equipped={{ color: 'color_sky', hat: null, accessory: null, background: 'bg_day' }} size={150} />
+      <View style={{ alignItems: 'center', marginTop: S.md }}>
+        <Dotty equipped={{ color: 'color_sky', hat: null, accessory: null, background: 'bg_day' }} size={130} />
         <H1 style={{ marginTop: S.sm }}>Dotty</H1>
         <Body color={C.inkSoft} style={{ textAlign: 'center' }}>
           Look after Dotty, and Dotty looks after you.
         </Body>
       </View>
 
-      <Card>
-        <Field label="Email" value={email} onChangeText={setEmail} keyboardType="email-address" autoComplete="email" />
-        <Field label="Password" value={password} onChangeText={setPassword} secureTextEntry onSubmitEditing={() => submit()} />
-        {error ? <Small color={C.danger}>{error}</Small> : null}
-        <Button title="Log in" onPress={() => submit()} loading={busy === 'form'} disabled={!email || !password} />
-        <Link href="/auth/join" asChild>
-          <Pressable style={{ alignItems: 'center', paddingVertical: S.sm }}>
-            <Small color={C.primaryDark}>New here? Create an account</Small>
-          </Pressable>
-        </Link>
-      </Card>
+      <Row style={{ justifyContent: 'center' }}>
+        <Chip label="I'm a kid" icon="human-child" selected={mode === 'kid'} onPress={() => { setMode('kid'); setError(null); }} />
+        <Chip label="Grown-up" icon="account-heart" selected={mode === 'grownup'} onPress={() => { setMode('grownup'); setError(null); }} />
+      </Row>
+
+      {mode === 'kid' ? (
+        <Card>
+          <H2>Hi! What&apos;s your family code?</H2>
+          <Field
+            label="Family code (ask your grown-up)"
+            value={code}
+            onChangeText={(v) => setCode(v.toUpperCase().slice(0, 6))}
+            autoCapitalize="characters"
+            maxLength={6}
+            placeholder="ABC123"
+          />
+          <Small>Now tap your secret number</Small>
+          <PinPad value={pin} onChange={setPin} />
+          {error ? <Small color={C.danger}>{error}</Small> : null}
+          <Button
+            title="Let's go!"
+            icon="login"
+            size="lg"
+            onPress={() => submitKid()}
+            loading={busy === 'kid' || busy === 'maya'}
+            disabled={code.length < 6 || pin.length < PIN_LENGTH}
+          />
+        </Card>
+      ) : (
+        <Card>
+          <Field label="Email" value={email} onChangeText={setEmail} keyboardType="email-address" autoComplete="email" />
+          <Field label="Password" value={password} onChangeText={setPassword} secureTextEntry onSubmitEditing={() => submitGrownUp()} />
+          {error ? <Small color={C.danger}>{error}</Small> : null}
+          <Button title="Log in" onPress={() => submitGrownUp()} loading={busy === 'form'} disabled={!email || !password} />
+        </Card>
+      )}
+
+      <Link href="/auth/join" asChild>
+        <Pressable style={{ alignItems: 'center', paddingVertical: S.sm }}>
+          <Small color={C.primaryDark}>New here? Create an account</Small>
+        </Pressable>
+      </Link>
 
       <Card tint={C.sunSoft}>
-        <Small color={C.ink}>Demo accounts (password demo1234)</Small>
+        <Small color={C.ink}>Demo</Small>
         <Row style={{ flexWrap: 'wrap' }}>
-          {DEMO.map((d) => (
-            <Button
-              key={d.email}
-              title={d.label}
-              icon={d.icon}
-              variant="sun"
-              loading={busy === d.email}
-              onPress={() => submit(d.email, 'demo1234', d.email)}
-            />
-          ))}
+          <Button
+            title="Maya (kid)"
+            icon="human-child"
+            variant="sun"
+            loading={busy === 'maya'}
+            onPress={() => {
+              setMode('kid');
+              setCode(DEMO_FAMILY);
+              setPin(DEMO_PIN);
+              void submitKid(DEMO_FAMILY, DEMO_PIN, 'maya');
+            }}
+          />
+          <Button
+            title="Alex (parent)"
+            icon="account-heart"
+            variant="sun"
+            loading={busy === 'alex'}
+            onPress={() => {
+              setMode('grownup');
+              void submitGrownUp('parent@dotty.demo', 'demo1234', 'alex');
+            }}
+          />
         </Row>
+        <Small>
+          Kid: family code {DEMO_FAMILY} + PIN {DEMO_PIN} · Parent: parent@dotty.demo / demo1234
+        </Small>
       </Card>
 
       <Pressable onPress={() => setShowServer((v) => !v)}>

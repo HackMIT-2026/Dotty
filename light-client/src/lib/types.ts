@@ -1,14 +1,16 @@
-export type EventType = 'reading' | 'bolus' | 'basal' | 'meal' | 'activity' | 'pet';
+export type EventType = 'reading' | 'bolus' | 'basal' | 'meal' | 'activity' | 'pet' | 'task';
+export type TaskKind = 'check' | 'medicine' | 'meal' | 'activity' | 'custom';
+export type TaskStatus = 'done' | 'pending' | 'missed';
 export type Intensity = 'light' | 'moderate' | 'vigorous';
-export type ActivityChoice = 'none' | Intensity;
-export type Mood = 'bouncy' | 'sleepy' | 'sluggish' | 'shaky';
+export type Mood = 'bouncy' | 'sleepy' | 'sluggish' | 'shaky' | 'waiting';
 export type Slot = 'color' | 'hat' | 'accessory' | 'background';
 
 export interface User {
   id: string;
   role: 'child' | 'parent' | 'clinician';
   name: string;
-  email: string;
+  /** Children sign in with the family code and a PIN, so they have no email. */
+  email: string | null;
   family_id: string | null;
 }
 
@@ -66,6 +68,26 @@ export interface Plan {
   updated_at: string;
 }
 
+/**
+ * One item of the doctor's care plan. The child's app only ever receives the game fields; the parent's app also
+ * gets `title` and `instructions` (server/app/services/tasks.py filters this by role).
+ */
+export interface CareTask {
+  id: string;
+  quest_title: string;
+  kind: TaskKind;
+  time: string | null;
+  window_min: number;
+  days: number[];
+  target_minutes: number | null;
+  importance: number;
+  reward_dots: number;
+  // parent only
+  title?: string;
+  instructions?: string;
+  active?: boolean;
+}
+
 export interface Quest {
   id: string;
   title: string;
@@ -88,11 +110,19 @@ export interface Pet {
   equipped: { color: string; hat: string | null; accessory: string | null; background: string };
   owned_items: string[];
   badges: string[];
-  quests: Quest[];
+  quests: { plan: PetPlanQuest[]; habits: Quest[] };
+  adherence_today: number | null;
   last_checkup_at?: string | null;
 }
 
-export type NotificationKind = 'clinician_note' | 'missed_treatment' | 'out_of_range' | 'reward' | 'high_five';
+/** A care-plan task as the server sends it to the child (already status-resolved). */
+export interface PetPlanQuest extends CareTask {
+  when: string;
+  status: 'done' | 'upcoming' | 'waiting';
+  done: boolean;
+}
+
+export type NotificationKind = 'clinician_note' | 'missed_treatment' | 'out_of_range' | 'reward' | 'high_five' | 'care_summary';
 
 export interface AppNotification {
   id: string;
@@ -134,6 +164,7 @@ export interface PullResult {
   patient: { id: string; name: string };
   events: DotEvent[];
   plan: Plan | null;
+  tasks: CareTask[];
   notifications: AppNotification[];
   pet: Pet;
 }
@@ -143,25 +174,4 @@ export interface PushResult {
   new_count: number;
   rewards: Reward[];
   pet: Pet;
-}
-
-export interface DoseResult {
-  blocked: boolean;
-  message: string | null;
-  warnings: string[];
-  carbs_g: number;
-  bg_mgdl: number;
-  activity: ActivityChoice;
-  plan_version: number | null;
-  max_bolus: number;
-  suggested_units: number;
-  icr_g_per_unit?: number;
-  isf_mgdl_per_unit?: number;
-  correction_target?: number;
-  carb_units?: number;
-  correction_units?: number;
-  activity_reduce_pct?: number;
-  activity_factor?: number;
-  raw_units?: number;
-  capped?: boolean;
 }

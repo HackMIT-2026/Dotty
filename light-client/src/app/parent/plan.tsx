@@ -28,8 +28,6 @@ function Item({ label, value, icon }: { label: string; value: string; icon?: Ico
   );
 }
 
-const REMINDER_ICON = { check: 'heart-pulse', meal: 'silverware-fork-knife', bedtime: 'weather-night' } as const;
-
 export default function PlanScreen() {
   const now = useNow();
   const unit = useGlucoseUnit();
@@ -50,7 +48,7 @@ export default function PlanScreen() {
   if (!plan) {
     return (
       <Screen>
-        <PageHeader title="Treatment plan" />
+        <PageHeader title="Treatment settings" />
         <Card>
           <Body>No plan yet. Your care team sets it up in the clinician portal, and it appears here automatically.</Body>
         </Card>
@@ -60,7 +58,7 @@ export default function PlanScreen() {
 
   return (
     <Screen>
-      <PageHeader title="Treatment plan" />
+      <PageHeader title="Treatment settings" />
       <Small>
         Version {plan.version} · by {clinician ?? 'your care team'} · updated {timeAgo(plan.updated_at, now)}
       </Small>
@@ -98,12 +96,6 @@ export default function PlanScreen() {
         </Card>
       ) : null}
 
-      <Card>
-        <H2>Check-up reminders</H2>
-        {plan.reminders.map((r) => (
-          <Item key={r.time + r.kind} icon={REMINDER_ICON[r.kind]} label={r.label ?? r.kind} value={`${r.time} ±${r.window_min} min`} />
-        ))}
-      </Card>
 
       {plan.notes ? (
         <Card tint={C.primarySoft}>

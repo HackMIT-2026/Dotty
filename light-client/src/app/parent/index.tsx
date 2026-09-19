@@ -5,12 +5,14 @@ import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { GlucoseChart } from '@/components/glucose-chart';
 import { Icon, IconTile } from '@/components/icon';
 import { QuickLog } from '@/components/quick-log';
+import { GlucoseUnitToggle } from '@/components/unit-toggle';
 import { PageHeader } from '@/components/page-header';
-import { Body, Button, Card, Chip, H2, Row, Screen, Small } from '@/components/ui';
+import { Body, Button, Card, Chip, H2, ProgressBar, Row, Screen, Small } from '@/components/ui';
 import { C, R, S, font } from '@/constants/theme';
 import { api, errorText } from '@/lib/api';
 import { EVENT_ICON, bgOf, eventTitle, lastReading, ofType, timeInRange, todaysEvents, trend } from '@/lib/derive';
 import { useStore } from '@/lib/store';
+import { planToday } from '@/lib/tasks';
 import { syncNow } from '@/lib/sync';
 import { timeAgo, useNow } from '@/lib/time';
 import type { Pet } from '@/lib/types';
@@ -44,6 +46,7 @@ export default function ParentHome() {
   const syncing = useStore((s) => s.syncing);
   const pushToast = useStore((s) => s.pushToast);
   const unit = useGlucoseUnit();
+  const tasks = useStore((s) => s.tasks);
   const [hours, setHours] = useState(24);
   const [highFiving, setHighFiving] = useState(false);
 
@@ -60,6 +63,7 @@ export default function ParentHome() {
   const insulin = today.filter((e) => e.type === 'bolus').reduce((s, e) => s + (e.data.units ?? 0), 0);
   const active = today.filter((e) => e.type === 'activity').reduce((s, e) => s + (e.data.minutes ?? 0), 0);
   const checks = today.filter((e) => e.type === 'reading').length;
+  const carePlan = planToday(tasks, events, now);
   const latestNote = notifications.find((n) => n.kind === 'clinician_note');
   const recent = [...events].reverse().filter((e) => e.type !== 'pet').slice(0, 8);
   const markers = events.filter((e) => e.type === 'meal' || e.type === 'activity' || (e.type === 'bolus' && e.data.units != null));
@@ -99,6 +103,10 @@ export default function ParentHome() {
       <PageHeader title={`${childName}'s day`} />
 
       <Card>
+        <Row style={{ justifyContent: 'space-between' }}>
+          <Small>Glucose units</Small>
+          <GlucoseUnitToggle />
+        </Row>
         {last ? (
           <Row style={{ justifyContent: 'space-between', alignItems: 'flex-end' }}>
             <View>
@@ -135,10 +143,27 @@ export default function ParentHome() {
         <Stat label="Active" value={`${active} min`} sub="today" />
       </View>
 
-      <Row>
-        <Button title="Dose helper" icon="calculator" style={{ flex: 1 }} onPress={() => router.navigate('/parent/dose')} />
-        <Button title="High five" icon="hand-clap" variant="sun" style={{ flex: 1 }} onPress={highFive} loading={highFiving} />
-      </Row>
+      {carePlan.total > 0 ? (
+        <Pressable onPress={() => router.navigate('/parent/care-plan')}>
+          <Card tint={carePlan.done === carePlan.total ? C.mintSoft : undefined}>
+            <Row style={{ justifyContent: 'space-between' }}>
+              <Row style={{ gap: 6 }}>
+                <Icon name="clipboard-check-outline" size={18} color={C.primaryDark} />
+                <Small color={C.primaryDark}>Care plan today</Small>
+              </Row>
+              <Row style={{ gap: 2 }}>
+                <Small color={carePlan.items.some((i) => i.status === 'missed') ? C.danger : C.primaryDark}>
+                  {carePlan.done}/{carePlan.total} done
+                </Small>
+                <Icon name="chevron-right" size={18} color={C.primaryDark} />
+              </Row>
+            </Row>
+            <ProgressBar value={carePlan.total ? carePlan.done / carePlan.total : 0} color={carePlan.done === carePlan.total ? C.mint : C.primary} />
+          </Card>
+        </Pressable>
+      ) : null}
+
+      <Button title={`Send ${childName} a high five`} icon="hand-clap" variant="sun" onPress={highFive} loading={highFiving} />
 
       {latestNote ? (
         <Pressable onPress={() => router.navigate('/parent/inbox')}>

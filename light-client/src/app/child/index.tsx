@@ -12,6 +12,7 @@ import { C, R, S, font, shadow } from '@/constants/theme';
 import { MOOD_MESSAGES, computeQuests, lastReading, moodFor, needs } from '@/lib/derive';
 import { CARE_ACTIONS, DEFAULT_EQUIPPED } from '@/lib/pet';
 import { useStore } from '@/lib/store';
+import { childPlan, planToday } from '@/lib/tasks';
 import { useNow } from '@/lib/time';
 
 function Meter({ icon, label, value, color }: { icon: IconName; label: string; value: number; color: string }) {
@@ -32,12 +33,15 @@ export default function ChildHome() {
   const pet = useStore((s) => s.pet);
   const events = useStore((s) => s.events);
   const cheer = useStore((s) => s.cheer);
+  const tasks = useStore((s) => s.tasks);
   const name = useStore((s) => s.session?.user.name);
 
-  const mood = moodFor(lastReading(events), now);
-  const need = needs(events, now);
-  const quests = computeQuests(events, now);
-  const questsDone = quests.filter((q) => q.done).length;
+  const today = planToday(tasks, events, now);
+  const plan = childPlan(today.items);
+  const mood = moodFor(lastReading(events), now, today.items.some((i) => i.status === 'missed'));
+  const need = needs(events, now, tasks);
+  const habits = computeQuests(events, now, tasks.some((t) => t.kind === 'check'));
+  const quests = plan.total > 0 ? { done: plan.done, total: plan.total, label: "Dotty's big quests" } : { done: habits.filter((q) => q.done).length, total: habits.length, label: "Today's quests" };
   const equipped = pet?.equipped ?? DEFAULT_EQUIPPED;
 
   return (
@@ -100,16 +104,16 @@ export default function ChildHome() {
             <Row style={{ justifyContent: 'space-between' }}>
               <Row style={{ gap: 6 }}>
                 <Icon name="trophy" size={18} color={C.primaryDark} />
-                <Small color={C.primaryDark}>Today's quests</Small>
+                <Small color={C.primaryDark}>{quests.label}</Small>
               </Row>
               <Row style={{ gap: 2 }}>
                 <Small color={C.primaryDark}>
-                  {questsDone}/{quests.length} done
+                  {quests.done}/{quests.total} done
                 </Small>
                 <Icon name="chevron-right" size={18} color={C.primaryDark} />
               </Row>
             </Row>
-            <ProgressBar value={questsDone / quests.length} color={C.primary} />
+            <ProgressBar value={quests.total ? quests.done / quests.total : 0} color={C.primary} />
           </Card>
         </Pressable>
       </View>

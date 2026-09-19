@@ -1,0 +1,25 @@
+@import 'tailwindcss';
+
+/* Same palette and font as the family app (light-client/src/constants/theme.ts). */
+@theme {
+  --font-sans: 'Nunito', ui-sans-serif, system-ui, sans-serif;
+  --color-ink: #2b2650;
+  --color-ink-soft: #6e6a8f;
+  --color-line: #e6e2f5;
+  --color-canvas: #f5f3ff;
+  --color-brand: #6c5ce7;
+  --color-brand-dark: #5647c9;
+  --color-brand-soft: #ece9fd;
+  --color-good: #2fb67c;
+  --color-good-soft: #ddf7ec;
+  --color-warn: #f5a524;
+  --color-warn-soft: #fff1d6;
+  --color-bad: #e5534b;
+  --color-bad-soft: #fde8e7;
+  --color-sky: #4da8ff;
+  --color-sky-soft: #e3f1ff;
+}
+
+body {
+  @apply bg-canvas text-ink font-sans;
+}

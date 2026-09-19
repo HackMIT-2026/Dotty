@@ -5,6 +5,7 @@ import { createJSONStorage, persist } from 'zustand/middleware';
 import { newId } from './ids';
 import type {
   AppNotification,
+  CareTask,
   DotEvent,
   Family,
   Pet,
@@ -72,6 +73,7 @@ interface State {
   events: DotEvent[];
   outbox: DotEvent[];
   plan: Plan | null;
+  tasks: CareTask[];
   pet: Pet | null;
   notifications: AppNotification[];
   shop: ShopItem[];
@@ -111,6 +113,7 @@ const EMPTY_DATA = {
   events: [] as DotEvent[],
   outbox: [] as DotEvent[],
   plan: null,
+  tasks: [] as CareTask[],
   pet: null,
   notifications: [] as AppNotification[],
   shop: [] as ShopItem[],
@@ -172,6 +175,7 @@ export const useStore = create<State>()(
               : s.session,
           patient: res.patient,
           plan: res.plan,
+          tasks: res.tasks ?? [],
           pet: s.outbox.reduce<Pet | null>(withPreview, res.pet),
           events: mergeEvents(s.events, res.events),
           notifications: mergeNotifications(s.notifications, res.notifications),
@@ -208,6 +212,7 @@ export const useStore = create<State>()(
         events: s.events,
         outbox: s.outbox,
         plan: s.plan,
+        tasks: s.tasks,
         pet: s.pet,
         notifications: s.notifications,
         shop: s.shop,

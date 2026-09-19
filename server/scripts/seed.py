@@ -15,12 +15,14 @@ from datetime import datetime, timedelta
 from app import db
 from app.auth import hash_password
 from app.services import gamification, shop
+from app.services import tasks as care
 from app.services.dosing import round_half
 from app.services.simulator import glucose_model
 from app.util import at_local, new_id, now, zone
 
 FAMILY_CODE = "DEMO42"
-PASSWORD = "demo1234"
+PASSWORD = "demo1234"  # grown-ups
+CHILD_PIN = "1234"  # the child signs in with the family code + this PIN, never an email
 TZ = "America/New_York"
 HISTORY_DAYS = 14
 QUIET_HOURS = 5  # the history ends this long ago so Dotty starts out sleepy
@@ -33,24 +35,30 @@ DEFAULT_PLAN = {
     "correction_target": 120,
     "max_bolus": 10,
     "basal": [{"time": "21:00", "units": 12}],
-    "reminders": [
-        {"time": "07:00", "kind": "check", "window_min": 60, "label": "morning check"},
-        {"time": "12:00", "kind": "meal", "window_min": 60, "label": "lunch check"},
-        {"time": "18:00", "kind": "meal", "window_min": 60, "label": "dinner check"},
-        {"time": "21:00", "kind": "bedtime", "window_min": 60, "label": "bedtime check"},
-    ],
+    "reminders": [],  # reminders now come from the care-plan tasks below
     "activity_rules": {"light": 0, "moderate": 25, "vigorous": 50},
     "notes": "Demo plan. Placeholder values, not medical advice.",
 }
 
 
-def _user(role: str, name: str, email: str, **extra) -> dict:
+# The doctor's daily care plan: parent wording + instructions, and the child's quest wording.
+DEFAULT_TASKS = [
+    {"title": "Morning glucose check", "instructions": "Fingerstick before breakfast.", "kind": "check", "time": "07:00", "importance": 2},
+    {"title": "Lunch glucose check", "instructions": "Check before lunch, then give the lunch bolus per the carb ratio.",
+     "kind": "check", "time": "12:00", "importance": 2},
+    {"title": "Dinner glucose check", "instructions": "Check before dinner.", "kind": "check", "time": "18:00", "importance": 2},
+    {"title": "Bedtime basal insulin", "instructions": "12 u Lantus. Rotate injection sites.", "kind": "medicine", "time": "21:00",
+     "importance": 3},
+]
+
+
+def _user(role: str, name: str, email: str | None, secret: str = PASSWORD, **extra) -> dict:
     return {
         "_id": new_id(),
         "role": role,
         "name": name,
         "email": email,
-        "password_hash": hash_password(PASSWORD),
+        "password_hash": hash_password(secret),
         "family_id": None,
         "patient_ids": [],
         "created_at": now(),
@@ -117,7 +125,7 @@ def main() -> None:
 
     clinician = _user("clinician", "Dr. Lee", "lee@dotty.demo")
     parent = _user("parent", "Alex", "parent@dotty.demo")
-    child = _user("child", "Maya", "child@dotty.demo")
+    child = _user("child", "Maya", None, CHILD_PIN)
     family = {
         "_id": new_id(),
         "code": FAMILY_CODE,
@@ -134,6 +142,16 @@ def main() -> None:
     db.families.insert_one(family)
     db.plans.insert_one({"_id": new_id(), "patient_id": child["_id"], "clinician_id": clinician["_id"], **DEFAULT_PLAN, "version": 1, "updated_at": at})
 
+    history_start = at - timedelta(days=HISTORY_DAYS + 1)  # tasks existed for the whole history, so adherence is full
+    db.tasks.insert_many(
+        [
+            {"_id": new_id(), "patient_id": child["_id"], "clinician_id": clinician["_id"], "window_min": 60, "days": [],
+             "target_minutes": None, "active": True, "created_at": history_start, "updated_at": history_start, **t,
+             "quest_title": care.quest_title_for(t["kind"], t["time"]), "reward_dots": care.reward_for(t["importance"])}
+            for t in DEFAULT_TASKS
+        ]
+    )
+
     events = build_history(child["_id"], at, rng)
     db.events.insert_many(events)
 
@@ -146,8 +164,9 @@ def main() -> None:
     pet = db.pets.find_one({"_id": child["_id"]})
     print(f"Seeded {len(events)} events over {HISTORY_DAYS} days into '{db.db.name}'.")
     print(f"  streak: {pet['streak_days']} days | badges: {pet['badges'] or 'none'} | dots: {pet['dots']}")
+    print(f"  care plan: {', '.join(t['title'] + ' ' + t['time'] for t in DEFAULT_TASKS)}")
     print(f"  family code: {FAMILY_CODE}   (all demo passwords: {PASSWORD})")
-    print("  child     child@dotty.demo   (Maya)")
+    print(f"  child     family code {FAMILY_CODE} + PIN {CHILD_PIN}  (Maya \u2014 no email)")
     print("  parent    parent@dotty.demo  (Alex)")
     print("  clinician lee@dotty.demo     (Dr. Lee)")
 

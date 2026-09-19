@@ -50,7 +50,7 @@ def start(patient_id: str, scenario: str, speed: int) -> dict:
     if scenario == "skip_lunch":
         fam = db.families.find_one({"child_id": patient_id}) or {}
         date_str = now().astimezone(zone(fam.get("tz"))).date().isoformat()
-        created = alerts.raise_missed(patient_id, "lunch check", date_str, "demo-lunch")
+        created = alerts.raise_missed(patient_id, "the lunch check-up (12:00)", date_str, "demo-lunch")
         return {"status": "missed lunch raised" if created else "already raised today", "scenario": scenario}
 
     stop_event = threading.Event()

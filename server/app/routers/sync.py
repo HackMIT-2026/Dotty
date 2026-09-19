@@ -6,6 +6,7 @@ from .. import db
 from ..auth import family_of, patient_for, require_role
 from ..models import SyncPushIn
 from ..services import gamification
+from ..services import tasks as care
 from ..services.ingest import ingest
 from ..util import now, pub
 
@@ -64,6 +65,8 @@ def pull(since: datetime | None = None, user: dict = Depends(require_role("child
         "patient": {"id": pid, "name": child["name"]},
         "events": [pub(e) for e in events],
         "plan": pub(db.plans.find_one({"patient_id": pid})),
+        # the doctor's care plan: full detail for the parent, the game view only for the child
+        "tasks": [(care.child_view if user["role"] == "child" else care.full_view)(t) for t in care.active_tasks(pid)],
         "notifications": [pub(n) for n in notifications],
         "pet": gamification.pet_view(gamification.get_pet(pid), _tz(user)),
     }

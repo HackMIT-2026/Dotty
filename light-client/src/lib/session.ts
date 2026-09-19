@@ -21,6 +21,23 @@ export async function login(email: string, password: string): Promise<void> {
   await startSession(res);
 }
 
+/** Children sign in with the family code and their 4-digit PIN. No email, nothing to type but 4 digits. */
+export async function childLogin(familyCode: string, pin: string): Promise<void> {
+  const res = await api<AuthResult>('/auth/child/login', {
+    method: 'POST',
+    body: { family_code: familyCode.trim().toUpperCase(), pin },
+  });
+  await startSession(res);
+}
+
+export async function childRegister(name: string, familyCode: string, pin: string): Promise<void> {
+  const res = await api<AuthResult>('/auth/child/register', {
+    method: 'POST',
+    body: { name: name.trim(), family_code: familyCode.trim().toUpperCase(), pin },
+  });
+  await startSession(res);
+}
+
 export function localTz(): string {
   try {
     return Intl.DateTimeFormat().resolvedOptions().timeZone;

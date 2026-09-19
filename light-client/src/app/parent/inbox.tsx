@@ -13,6 +13,7 @@ import type { AppNotification } from '@/lib/types';
 const KIND: Record<AppNotification['kind'], { icon: IconName; color: string; tint: string }> = {
   clinician_note: { icon: 'doctor', color: C.primary, tint: C.primarySoft },
   missed_treatment: { icon: 'clock-alert-outline', color: '#B7791F', tint: C.sunSoft },
+  care_summary: { icon: 'clipboard-check-outline', color: C.primary, tint: C.primarySoft },
   out_of_range: { icon: 'water-alert', color: C.danger, tint: C.dangerSoft },
   reward: { icon: 'star-four-points', color: C.mint, tint: C.mintSoft },
   high_five: { icon: 'hand-clap', color: C.mint, tint: C.mintSoft },

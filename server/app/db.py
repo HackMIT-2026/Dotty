@@ -17,18 +17,20 @@ pets = db.pets
 shop_items = db.shop_items
 notes = db.notes
 notifications = db.notifications
+tasks = db.tasks
 
-COLLECTIONS = ["users", "families", "treatment_plans", "events", "pets", "shop_items", "notes", "notifications"]
+COLLECTIONS = ["users", "families", "treatment_plans", "events", "pets", "shop_items", "notes", "notifications", "tasks"]
 
 
 def ensure_indexes() -> None:
-    users.create_index("email", unique=True)
+    users.create_index("email", unique=True, partialFilterExpression={"email": {"$type": "string"}})  # children have none
     families.create_index("code", unique=True)
     plans.create_index("patient_id", unique=True)
     events.create_index([("patient_id", ASCENDING), ("ts", ASCENDING)])
     events.create_index([("patient_id", ASCENDING), ("created_at", ASCENDING)])
     events.create_index("client_id", unique=True)
     notifications.create_index([("user_id", ASCENDING), ("created_at", DESCENDING)])
+    tasks.create_index([("patient_id", ASCENDING), ("active", ASCENDING)])
     notifications.create_index(
         [("user_id", ASCENDING), ("dedupe", ASCENDING)],
         unique=True,

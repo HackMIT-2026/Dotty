@@ -19,13 +19,34 @@ def test_join_flow_and_roles(client, family):
 
 
 def test_wrong_code_and_duplicate_email_rejected(client, family):
-    r = client.post("/auth/register", json={"name": "X", "email": "x@t.io", "password": "secret1", "role": "child", "family_code": "NOPE00"})
+    r = client.post("/auth/child/register", json={"name": "X", "family_code": "NOPE00", "pin": "1111"})
     assert r.status_code == 404
-    r = client.post("/auth/register", json={"name": "Y", "email": "x@t.io", "password": "secret1", "role": "child"})
-    assert r.status_code == 400  # code required
+    r = client.post("/auth/register", json={"name": "Doc", "email": "d@t.io", "password": "secret1", "role": "clinician"})
+    assert r.status_code == 400  # a clinician needs a family code
     _, u = register(client, "Dup", "parent")
     r = client.post("/auth/register", json={"name": "Dup", "email": u["email"], "password": "secret1", "role": "parent"})
     assert r.status_code == 409
+
+
+def test_children_sign_in_with_the_family_code_and_a_pin(client, family):
+    child = client.get("/me", headers=family["child"]["h"]).json()["user"]
+    assert child["email"] is None  # a child never needs an email address
+
+    ok = client.post("/auth/child/login", json={"family_code": family["code"], "pin": "4321"})
+    assert ok.status_code == 200 and ok.json()["user"]["id"] == family["pid"]
+    assert client.post("/auth/child/login", json={"family_code": family["code"], "pin": "0000"}).status_code == 401
+    assert client.post("/auth/child/login", json={"family_code": "ZZZZZZ", "pin": "4321"}).status_code == 401
+    assert client.post("/auth/child/login", json={"family_code": family["code"], "pin": "12"}).status_code == 422
+
+    # a family has one child account
+    assert client.post("/auth/child/register", json={"name": "Twin", "family_code": family["code"], "pin": "1111"}).status_code == 409
+
+
+def test_parent_can_reset_the_child_pin(client, family):
+    assert client.put("/families/child-pin", json={"pin": "9999"}, headers=family["child"]["h"]).status_code == 403
+    assert client.put("/families/child-pin", json={"pin": "9999"}, headers=family["parent"]["h"]).status_code == 200
+    assert client.post("/auth/child/login", json={"family_code": family["code"], "pin": "4321"}).status_code == 401
+    assert client.post("/auth/child/login", json={"family_code": family["code"], "pin": "9999"}).status_code == 200
 
 
 def test_login_and_bad_password(client, family):
@@ -135,20 +156,6 @@ def test_sleepy_when_no_recent_reading(client, family):
     assert client.get(f"/pet/{family['pid']}", headers=family["child"]["h"]).json()["mood"] == "sleepy"
 
 
-def test_daily_quests_bonus_awarded_once(client, family):
-    tz = gamification.zone("America/New_York")
-    today = datetime.now(timezone.utc).astimezone(tz).date()
-    lunch_ts = datetime.combine(today, datetime.min.time().replace(hour=12), tzinfo=tz)
-    db.events.insert_one({"_id": "lunch", "client_id": "lunch-clientid", "patient_id": family["pid"], "type": "meal", "ts": lunch_ts, "source": "manual", "data": {"carbs_g": 45}, "created_at": lunch_ts})
-    checks = [make_event("reading", {"bg_mgdl": 110 + i}, minutes_ago=i) for i in range(4)]
-    r = push(client, family["child"], *checks, make_event("activity", {"minutes": 25, "intensity": "moderate"}))
-    quest_rewards = [x for x in r["rewards"] if x["kind"] == "quests"]
-    assert len(quest_rewards) == 1 and quest_rewards[0]["dots"] == 50
-    assert all(q["done"] for q in r["pet"]["quests"])
-    again = push(client, family["child"], make_event("reading", {"bg_mgdl": 105}))
-    assert not [x for x in again["rewards"] if x["kind"] == "quests"]
-
-
 def test_streak_of_three_days_awards_milestone_once(client, family):
     pid = family["pid"]
     tz = gamification.zone("America/New_York")
@@ -223,6 +230,16 @@ def test_note_notifies_parents_and_mark_read(client, family):
     assert client.post(f"/patients/{family['pid']}/notes", json={"text": "x"}, headers=family["parent"]["h"]).status_code == 403
 
 
+def test_clinician_can_take_a_note_back(client, family):
+    note = client.post(f"/patients/{family['pid']}/notes", json={"text": "Wrong patient, sorry"}, headers=family["doc"]["h"]).json()
+    assert client.delete(f"/patients/{family['pid']}/notes/{note['id']}", headers=family["parent"]["h"]).status_code == 403
+    assert client.delete(f"/patients/{family['pid']}/notes/{note['id']}", headers=family["doc"]["h"]).status_code == 200
+    assert client.get(f"/patients/{family['pid']}/notes", headers=family["doc"]["h"]).json() == []
+    # the parent's notification for that note is gone as well
+    assert not [n for n in client.get("/notifications", headers=family["parent"]["h"]).json()["notifications"] if n["data"].get("note_id")]
+    assert client.delete(f"/patients/{family['pid']}/notes/{note['id']}", headers=family["doc"]["h"]).status_code == 404
+
+
 def test_dose_suggest_uses_plan_and_recent_activity(client, family):
     body = {"carbs_g": 45, "bg_mgdl": 140}
     plain = client.post("/dose/suggest", json=body, headers=family["parent"]["h"]).json()
@@ -267,37 +284,6 @@ def test_high_reading_alert_is_deduplicated_within_30_minutes(client, family):
 def test_stale_readings_do_not_alert(client, family):
     push(client, family["child"], make_event("reading", {"bg_mgdl": 300}, minutes_ago=6 * 60))
     assert "out_of_range" not in _kinds(client, family["parent"])
-
-
-def test_missed_treatment_is_raised_once_after_the_window(client, family):
-    tz = gamification.zone("America/New_York")
-    today = datetime.now(timezone.utc).astimezone(tz).date()
-    after_window = datetime.combine(today, datetime.min.time().replace(hour=13, minute=30), tzinfo=tz)  # lunch 12:00 ± 60
-    alerts.run_checks(after_window)
-    alerts.run_checks(after_window + timedelta(minutes=1))
-    missed = [n for n in client.get("/notifications", headers=family["parent"]["h"]).json()["notifications"] if n["kind"] == "missed_treatment"]
-    assert len(missed) == 1 and "lunch check" in missed[0]["title"]
-
-
-def test_no_missed_alert_when_the_child_checked_in_time_or_window_open(client, family):
-    tz = gamification.zone("America/New_York")
-    today = datetime.now(timezone.utc).astimezone(tz).date()
-    at = lambda h, m=0: datetime.combine(today, datetime.min.time().replace(hour=h, minute=m), tzinfo=tz)  # noqa: E731
-    alerts.run_checks(at(12, 30))  # window still open
-    assert "missed_treatment" not in _kinds(client, family["parent"])
-    db.events.insert_one({"_id": "r1", "client_id": "r1-clientid", "patient_id": family["pid"], "type": "reading", "ts": at(12, 10), "source": "manual", "data": {"bg_mgdl": 120}, "created_at": at(12, 10)})
-    alerts.run_checks(at(13, 30))
-    assert "missed_treatment" not in _kinds(client, family["parent"])
-
-
-def test_two_missed_checks_a_day_escalate_to_the_clinician(client, family):
-    plan = {**PLAN, "reminders": [{"time": "08:00", "kind": "check", "window_min": 30}, {"time": "12:00", "kind": "check", "window_min": 30}]}
-    client.put(f"/patients/{family['pid']}/plan", json=plan, headers=family["doc"]["h"])
-    tz = gamification.zone("America/New_York")
-    today = datetime.now(timezone.utc).astimezone(tz).date()
-    for h, m in ((8, 45), (12, 45)):
-        alerts.run_checks(datetime.combine(today, datetime.min.time().replace(hour=h, minute=m), tzinfo=tz))
-    assert "out_of_range" in _kinds(client, family["doc"])
 
 
 def test_simulator_endpoint_skip_lunch_and_access(client, family):
