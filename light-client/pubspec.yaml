@@ -1,0 +1,35 @@
+name: dotty_light_client
+description: Dotty child and parent phone app (Flutter).
+publish_to: "none"
+version: 0.1.0+1
+
+environment:
+  sdk: ">=3.4.0 <4.0.0"
+
+dependencies:
+  flutter:
+    sdk: flutter
+  go_router: ^14.0.0
+  flutter_riverpod: ^2.5.1
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^4.0.0
+
+flutter:
+  uses-material-design: true
+  assets:
+    - assets/pet/
+    - assets/background/
+  fonts:
+    - family: Fredoka
+      fonts:
+        - asset: assets/fonts/Fredoka-400.ttf
+          weight: 400
+        - asset: assets/fonts/Fredoka-500.ttf
+          weight: 500
+        - asset: assets/fonts/Fredoka-600.ttf
+          weight: 600
+        - asset: assets/fonts/Fredoka-700.ttf
+          weight: 700
