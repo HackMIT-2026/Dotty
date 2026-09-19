@@ -1,0 +1,10 @@
+.dotty-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-8);
+  padding: var(--space-8) var(--space-16);
+  border-radius: var(--radius-pill);
+  background: var(--color-pond-blue);
+  color: var(--color-ink);
+}
+.dotty-chip__icon { flex: none; width: var(--size-icon-inline); height: var(--size-icon-inline); }

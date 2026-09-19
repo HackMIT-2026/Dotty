@@ -1,0 +1,19 @@
+.activity-item {
+  display: flex;
+  align-items: center;
+  gap: var(--space-12);
+  padding: var(--space-16);
+  border: var(--border-width) solid var(--color-border-soft);
+  border-radius: var(--radius-card);
+  background: var(--color-white);
+}
+.activity-item__badge {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: var(--size-min-tap-target);
+  height: var(--size-min-tap-target);
+  border-radius: 50%;
+  background: var(--color-pond-blue);
+}
+.activity-item__badge svg { width: var(--size-icon-inline); height: var(--size-icon-inline); }

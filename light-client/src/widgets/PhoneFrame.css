@@ -1,0 +1,19 @@
+.phone-frame {
+  min-height: 100dvh;
+  display: flex;
+  justify-content: center;
+}
+.phone-frame--scene {
+  background-image: var(--scene-wide);
+  background-size: cover;
+  background-position: center bottom;
+}
+.phone-frame__column {
+  width: 100%;
+  max-width: var(--size-phone-width);
+  min-height: 100dvh;
+  padding: env(safe-area-inset-top) 0 env(safe-area-inset-bottom);
+  background-size: cover;
+  background-position: center bottom;
+  background-repeat: no-repeat;
+}

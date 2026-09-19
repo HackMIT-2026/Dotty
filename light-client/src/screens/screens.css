@@ -1,0 +1,22 @@
+.screen { padding: var(--space-16); }
+.screen > * + * { margin-top: var(--space-16); }
+.screen .gap-8 { margin-top: var(--space-8); }
+.screen .gap-12 { margin-top: var(--space-12); }
+.screen .gap-24 { margin-top: var(--space-24); }
+.screen .gap-32 { margin-top: var(--space-32); }
+.screen__center { display: flex; flex-direction: column; align-items: center; gap: var(--space-8); }
+.screen__speech { text-align: center; }
+.screen__stack { display: flex; flex-direction: column; gap: var(--space-12); }
+.screen__pet-row { display: flex; align-items: center; gap: var(--space-16); }
+.screen__chips { display: flex; flex-wrap: wrap; gap: var(--space-8); }
+.care-note {
+  padding: var(--space-16);
+  border-radius: var(--radius-card);
+  background: var(--color-lavender);
+}
+.care-note__title { display: flex; align-items: center; gap: var(--space-8); margin-bottom: var(--space-8); }
+.care-note__title svg { width: var(--size-icon-inline); height: var(--size-icon-inline); }
+.pet-preview__grid { display: flex; flex-wrap: wrap; gap: var(--space-16); }
+.pet-preview__cell { display: flex; flex-direction: column; align-items: center; gap: var(--space-4); }
+.pet-preview__box { border: var(--border-width) solid var(--color-border-soft); }
+.pet-preview__tap { border: 0; background: none; padding: 0; cursor: pointer; align-self: center; }

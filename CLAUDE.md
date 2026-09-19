@@ -35,57 +35,64 @@ The repo is a monorepo with three workspaces.
 ```
 Dotty/
   CLAUDE.md          this file, in the repo root
-  light-client/      Flutter app for the CHILD and PARENT phone views (design width 393 px)
-  heavy-client/      Flutter web app for the CLINICIAN portal (design width 1440 px)
+  light-client/      React (Vite, TypeScript) app for the CHILD and PARENT phone views (design width 393 px)
+  heavy-client/      React (Vite, TypeScript) web app for the CLINICIAN portal (design width 1440 px)
   server/            Python FastAPI backend with PyMongo and MongoDB
 ```
 
 Workspace rules
-* light-client and heavy-client are separate Flutter projects. Each has its own pubspec.yaml, its own lib folder, and its own copy of lib/theme/app_theme.dart and the fake data.
-* Paths in this guide that start with lib/ mean lib/ inside the client being worked on. Say which client you are in whenever you create a file.
-* Shared pieces (Pet, BigButton, Chip, tokens) are copied into each client for now. Moving them into a shared Dart package is a later step.
-* There is no role switcher. Each client is run on its own. heavy-client runs as Flutter web at a 1440 px layout.
-* light-client currently has only lib/theme/app_theme.dart. Everything else is still to be created.
+* light-client and heavy-client are separate React (Vite, TypeScript) projects. Each has its own package.json, its own src folder, and its own copy of src/theme/tokens.css and the fake data.
+* Paths in this guide that start with src/ mean src/ inside the client being worked on. Say which client you are in whenever you create a file.
+* Shared pieces (Pet, BigButton, Chip, tokens) are copied into each client for now. Moving them into a shared package (an npm workspace) is a later step.
+* There is no role switcher. Each client is run on its own with `npm run dev`. heavy-client is a web app at a 1440 px layout. light-client is a web app designed at 393 px that runs in a phone browser (open the Network URL Vite prints), or can be added to the phone's Home Screen.
+* The clients were moved from Flutter to React. Use React idioms, and do not add Flutter or Dart code back.
 
 ## Stack
 
 light-client and heavy-client
-* Flutter (Dart) with Material 3, using the tokens in lib/theme/app_theme.dart
-* go_router for navigation
-* Fredoka bundled as a font asset in the app (declared in pubspec.yaml), so it works offline. Do not fetch fonts at runtime
-* Flutter's built in animation (implicit animations and AnimationController) for pet and celebration motion
-* Material icons (the built in Icons set)
-* State management: Riverpod (flutter_riverpod). Repositories are exposed as providers, so switching Fake to Api is one provider override
+* React 19 with TypeScript, built with Vite. Plain CSS, with all values coming from the tokens in src/theme/tokens.css (no CSS framework)
+* react-router-dom for navigation in light-client. It uses HashRouter, so URLs look like /#/child and work from any static host. heavy-client is a single screen for now and has no router
+* Fredoka bundled as font files in src/assets/fonts and declared with @font-face in tokens.css, so it works offline. Do not fetch fonts at runtime
+* CSS transitions and animations for pet and celebration motion (no animation library)
+* Material icons through react-icons/md (the Material Design set)
+* Data and state in light-client: TanStack Query (@tanstack/react-query). Repositories are provided through React context, so switching Fake to Api is a change in one place (createRepositories in data/providers.tsx). heavy-client keeps the plan draft in a small hook (usePlanDraft) over the same kind of repository
 
 server
 * Python with FastAPI, PyMongo, and MongoDB
 * Configuration through a server/.env file, with a committed server/.env.example
 * ElevenLabs is called only from the server, with a mock voice fallback (see "Server rules")
 
-Clients talk to the server through a REST API. A Flutter client never touches MongoDB directly.
+Clients talk to the server through a REST API. A client never touches MongoDB directly.
 
 ## Folder structure
 
 ```
-light-client/lib/
-  main.dart
-  router.dart          go_router: /child, /parent, and / redirects to /child
-  theme/               app_theme.dart (token file)
-  screens/             child_home_screen.dart, parent_feed_screen.dart
-  widgets/             pet.dart, big_button.dart, chip.dart, task_card.dart, activity_item.dart
-  data/
-    models/            patient, plan, task, log, pet, cheer
-    repositories/      plan_repository, task_repository, log_repository, pet_repository
-                       (each an abstract class, with a fake and an API implementation)
-    api_client.dart    the only file that makes HTTP calls
-  assets/              fonts/Fredoka, pet/ (pet-happy, pet-sleepy, pet-curious, pet-cheering)
+light-client/
+  index.html, package.json, vite.config.ts, tsconfig.json
+  src/
+    main.tsx           React root, providers, HashRouter
+    router.tsx         routes: /child, /parent, /pet-preview, and / redirects to /child
+    theme/             tokens.css (token file, also Fredoka @font-face and text style classes)
+    screens/           ChildHomeScreen.tsx, ParentFeedScreen.tsx, PetPreviewScreen.tsx (dev only)
+    widgets/           Pet, BigButton, DottyChip, TaskCard, ActivityItem, EnergyMeter, PhoneFrame
+                       (each a .tsx with its own .css)
+    data/
+      models/          models.ts: patient, quest, pet, activity, care plan types
+      repositories/    repositories.ts (interfaces: plan, task, log, pet) and fakeRepositories.ts;
+                       the API implementation goes next to it and calls the server through an
+                       apiClient.ts, the only file that makes HTTP calls
+      providers.tsx    repositories context, TanStack Query hooks, care actions
+    assets/            fonts/Fredoka, pet/ (happy, sleepy, curious, cheering), background/
 
-heavy-client/lib/
-  main.dart
-  theme/               app_theme.dart (same tokens as light-client)
-  screens/             clinician_plan_builder_screen.dart
-  widgets/             big_button.dart, chip.dart, plan_row.dart
-  data/                models, repositories (plan), api_client.dart
+heavy-client/
+  index.html, package.json, vite.config.ts, tsconfig.json
+  src/
+    main.tsx
+    theme/             tokens.css (same tokens as light-client)
+    screens/           ClinicianPlanBuilderScreen.tsx
+    widgets/           BigButton, DottyChip, PlanRow
+    data/              models/plan.ts, repositories/planRepository.ts, providers.tsx
+    assets/            fonts/Fredoka
 
 server/
   app/
@@ -99,7 +106,7 @@ server/
   requirements.txt
 ```
 
-Screens compose widgets and read data from repositories. A widget never makes an HTTP call.
+Screens compose widgets and read data through the hooks in data/providers.tsx. A widget never makes an HTTP call.
 
 ## Design source
 
@@ -124,61 +131,61 @@ The Figma file has limited tool calls on this account. Use the specs in this fil
 
 ## Naming map: Figma to code
 
-A Figma component name becomes a Dart widget class name (file names are snake_case). Variant properties and text properties are constructor parameters.
+A Figma component name becomes a React component name (file names are PascalCase, for example BigButton.tsx, with a BigButton.css beside it). Variant properties and text properties are props.
 
-| Figma component | Flutter widget | Parameters |
+| Figma component | React component | Props |
 |---|---|---|
-| Pet | Pet | mood: enum PetMood (happy, sleepy, curious, cheering) |
-| BigButton | BigButton | tone: enum (primary, soft), label |
-| Chip | Chip | label |
-| TaskCard | TaskCard | done: bool, title, subtitle |
+| Pet | Pet | mood: PetMood (happy, sleepy, curious, cheering), small |
+| BigButton | BigButton | tone: primary or soft, label, icon, onPress |
+| Chip | DottyChip | label, icon |
+| TaskCard | TaskCard | done: boolean, title, subtitle, whyText, onComplete |
 | ActivityItem | ActivityItem | message, time |
-| PlanRow | PlanRow | task, window, childWording |
+| PlanRow | PlanRow | task, window, childWording, whyText, reward, onRemove |
 
-If a name collides with a Flutter or Material class (Chip does), name the file and class to avoid the clash, for example DottyChip, and keep the Figma name in a doc comment.
+If a name would be confusing next to a library or DOM name (Chip is one), name the file and component to avoid the clash, for example DottyChip, and keep the Figma name in a doc comment.
 
 ## Tokens
 
-lib/theme/app_theme.dart is the token file in each client. Figma is the source of truth. Do not edit app_theme.dart until the spacing scale is verified from Figma (the unverified values below come from this file, not from Figma: sunny-amber, Display, Body large, button and clinician radius, spacing scale, sizes). When the Figma tool limit resets, the user will say so, and all remaining styles are read in one call. Known needed edits: use the bundled Fredoka font instead of google_fonts, and add card border 2, card padding 20 and status icon 44. The Figma variables are saved as color/name, and they map to constants in app_theme.dart.
+src/theme/tokens.css is the token file in each client. Figma is the source of truth. Do not edit tokens.css until the spacing scale is verified from Figma (the unverified values below come from this file, not from Figma: sunny-amber, Display, Body large, button and clinician radius, spacing scale, sizes). When the Figma tool limit resets, the user will say so, and all remaining styles are read in one call. The Figma variables are saved as color/name, and they map to CSS custom properties in tokens.css (color/gill-rose becomes --color-gill-rose).
 
-| Figma variable | Dart constant | Hex | Use |
+| Figma variable | CSS variable | Hex | Use |
 |---|---|---|---|
-| color/cream | AppColors.cream | #FFF8F0 | Page background |
-| color/coral | AppColors.coral | #F28B82 | Primary, pet body, main buttons |
-| color/gill-rose | AppColors.gillRose | #E56B8A | Gills and highlights |
-| color/lavender | AppColors.lavender | #B8A9E8 | Accent, soft buttons, banners |
-| color/pond-blue | AppColors.pondBlue | #A9D8EE | Chips, water, info |
-| color/mint | AppColors.mint | #A8E0C8 | Success, always with a check icon |
-| color/sunny-amber | AppColors.sunnyAmber | #F5C26B | Gentle attention, with a clock icon |
-| color/ink | AppColors.ink | #2B2A33 | Text and icons |
-| color/ink-muted | AppColors.inkMuted | #6B6875 | Secondary text |
-| color/white | AppColors.white | #FFFFFF | Cards and surfaces |
-| color/border | AppColors.borderSoft | #EADFD3 | Card borders |
+| color/cream | --color-cream | #FFF8F0 | Page background |
+| color/coral | --color-coral | #F28B82 | Primary, pet body, main buttons |
+| color/gill-rose | --color-gill-rose | #E56B8A | Gills and highlights |
+| color/lavender | --color-lavender | #B8A9E8 | Accent, soft buttons, banners |
+| color/pond-blue | --color-pond-blue | #A9D8EE | Chips, water, info |
+| color/mint | --color-mint | #A8E0C8 | Success, always with a check icon |
+| color/sunny-amber | --color-sunny-amber | #F5C26B | Gentle attention, with a clock icon |
+| color/ink | --color-ink | #2B2A33 | Text and icons |
+| color/ink-muted | --color-ink-muted | #6B6875 | Secondary text |
+| color/white | --color-white | #FFFFFF | Cards and surfaces |
+| color/border | --color-border-soft | #EADFD3 | Card borders |
 
-Text styles (Fredoka), in AppText: Dotty/Display is 44/52 Bold. Dotty/Heading 1 is 32/40 SemiBold. Dotty/Heading 2 is 24/32 SemiBold. Dotty/Body large is 20/30. Dotty/Body is 18/28. Dotty/Button is 18/24 Medium. Dotty/Caption is 14/20 Medium.
+Text styles (Fredoka), as classes in tokens.css: Dotty/Display (.text-display) is 44/52 Bold. Dotty/Heading 1 (.text-h1) is 32/40 SemiBold. Dotty/Heading 2 (.text-h2) is 24/32 SemiBold. Dotty/Body large (.text-body-large) is 20/30. Dotty/Body (.text-body) is 18/28. Dotty/Button (.text-button) is 18/24 Medium. Dotty/Caption (.text-caption) is 14/20 Medium. Muted variants end in -muted. Clinician screens use .text-clinician (16/24).
 
-Shape (AppRadius): card 24, button 16, clinician 8. Spacing (AppSpace): 4, 8, 12, 16, 24, 32, 48. Sizes (AppSize): main child button height 64, minimum tap target 48. One soft shadow (AppShadows.soft): offset 0, 4, blur 12, black at 8 percent.
+Shape (--radius-*): card 24, button 16, clinician 8, pill 999. Spacing (--space-*): 4, 8, 12, 16, 24, 32, 48, plus 20 for card padding. Sizes (--size-*): main child button height 64, minimum tap target 48, status icon 44. Card border width is --border-width (2). One soft shadow (--shadow-soft): offset 0, 4, blur 12, black at 8 percent. Motion time is --motion-short, which is 0 when the user asked for reduced motion.
 
 ## Rules
 
-* Use tokens for every color, font, radius, spacing, and size. Never write a Color(0x...) literal, a raw font size, or a magic number inside a widget or screen. Only app_theme.dart defines values.
+* Use tokens for every color, font, radius, spacing, and size. Never write a hex color, a raw font size, or a magic pixel number inside a component, screen, or component CSS file. Use var(--...) and the text classes. Only tokens.css defines values.
 * Use dark ink text on every colored surface. White text on coral fails contrast.
 * Pair color with an icon or shape so meaning never depends on color alone.
 * Main child buttons are 64 px tall. Minimum tap target is 48 px.
-* Never show red, crosses, or scolding messages. Never use the close, clear, cancel, or cross Material icons. A missed task makes the pet sleepy and one tap wakes it up. The pet never dies.
-* Done state uses Icons.check with mint. Waiting state uses Icons.schedule (the clock) with sunny amber.
+* Never show red, crosses, or scolding messages. Never use the close, clear, cancel, or cross Material icons (MdClose, MdClear, MdCancel and their variants). A missed task makes the pet sleepy and one tap wakes it up. The pet never dies.
+* Done state uses MdCheck with mint. Waiting state uses MdSchedule (the clock) with sunny amber.
 * Pet reactions never depend on a glucose number.
 * The app never calculates or suggests a dose. Insulin adjustment information appears only as rules typed in by the clinician and labeled as coming from the care team.
 * Engagement mechanics must never punish or shame. The streak chip reads "Days with Pip" and never resets to zero or removes rewards when a day is missed.
 * Every task can show a short "Why am I doing this?" line in the child's wording.
-* Respect the reduced motion setting for every animation. Check MediaQuery.of(context).disableAnimations (or MediaQuery.disableAnimationsOf(context)) and skip or shorten the animation when it is true.
+* Respect the reduced motion setting for every animation. Use --motion-short for durations (it becomes 0 under prefers-reduced-motion: reduce), or wrap the animation in a prefers-reduced-motion media query. Never hard code a duration.
 * Child screens use text of 18 px or larger. Clinician screens can use 16 px.
-* Keep widgets small. A screen composes widgets and reads data from repositories.
-* Fonts and pet images are bundled as assets. The child app must render without a network connection.
+* Keep components small. A screen composes components and reads data through the hooks in data/providers.tsx.
+* Fonts and pet images are bundled as assets (imported from src/assets, so Vite bundles them). The child app must render without a network connection.
 
 ## Data shape
 
-Models are plain Dart classes in the clients and Pydantic models on the server. The JSON field names below are the contract between them.
+Models are TypeScript types in the clients and Pydantic models on the server. The JSON field names below are the contract between them.
 
 ```
 patient   { id, name, petName, streak }
@@ -189,14 +196,14 @@ pet       { mood }        // happy, sleepy, curious, cheering
 cheer     { id, message, at }
 ```
 
-The server API (below) uses its own field names for the core loop. A repository maps between server responses and these client models, so widgets never see raw API shapes.
+The server API (below) uses its own field names for the core loop. A repository maps between server responses and these client models, so components never see raw API shapes.
 
-## Data layer in Flutter
+## Data layer in the clients
 
-* Each repository (plan, tasks, logs, pet) is an abstract class in data/repositories/.
-* Each has two implementations: a Fake one that returns data from local fake data, and an Api one that calls the server through api_client.dart.
-* A single switch chooses between them, for example a compile time flag `--dart-define=USE_SERVER=true` (default false, so the UI runs without the server). The server base URL is also a dart-define with a localhost default.
-* Screens and widgets depend only on the abstract repository. They never import api_client.dart.
+* Each repository (plan, tasks, logs, pet) is an interface in data/repositories/.
+* Each has two implementations: a Fake one that returns data from local fake data, and an Api one that calls the server through apiClient.ts.
+* A single switch chooses between them: the build-time flag `VITE_USE_SERVER=true` (read as import.meta.env.VITE_USE_SERVER, default false, so the UI runs without the server). The server base URL is also a Vite env variable (VITE_API_URL) with a localhost default.
+* Screens and components depend only on the repository interfaces and the hooks in data/providers.tsx. They never import apiClient.ts.
 * Keep repository method names and return types identical across both implementations, so switching does not change any screen.
 
 ## Core demo loop (server)
@@ -221,41 +228,41 @@ Rules for the loop
 ## Server rules
 
 * The server is the only place MongoDB and ElevenLabs credentials are used. They live in server/.env, which is git ignored. Commit only server/.env.example, with placeholder values.
-* Add CORS middleware for local development (allow the localhost origins that Flutter web and the emulators use).
-* ElevenLabs is called only from the server, and its API key never appears in any client, in fake data, or in a dart-define. A client asks the server for pet voice audio.
+* Add CORS middleware for local development (allow the localhost origins that the Vite dev servers and a phone on the local network use).
+* ElevenLabs is called only from the server, and its API key never appears in any client, in fake data, or in a VITE_ variable (those are bundled into the app). A client asks the server for pet voice audio.
 * Voice has a mock fallback: when no ElevenLabs key is set (or the call fails), the server returns a mock voice response so the app still works without a key.
-* Flutter clients never touch MongoDB directly. They call the REST API only.
+* The clients never touch MongoDB directly. They call the REST API only.
 * server/seed.py creates one patient named Alex with two sample tasks, using fake data only.
 
 ## How to build a screen
 
 1. Read this file.
 2. Call get_design_context for the frame node.
-3. Reuse widgets from lib/widgets. Create a missing widget only when the frame needs it.
-4. Use tokens from app_theme.dart for every value.
-5. Fill the screen from a repository. The fake implementation supplies the data when the server is off.
-6. Check the screen at 393 px wide for child and parent views (light-client) and 1440 px wide for the clinician view (heavy-client).
+3. Reuse components from src/widgets. Create a missing component only when the frame needs it.
+4. Use tokens from tokens.css for every value.
+5. Fill the screen through the hooks in data/providers.tsx. The fake implementation supplies the data when the server is off.
+6. Check the screen at 393 px wide for child and parent views (light-client) and 1440 px wide for the clinician view (heavy-client). Run `npm run build` to type check.
 
 ## Prompt recipes
 
 Build a screen:
 ```
-Read CLAUDE.md. Call get_design_context for ChildHome (node-id 14-2). Build light-client/lib/screens/child_home_screen.dart using the widgets in light-client/lib/widgets and the tokens in light-client/lib/theme/app_theme.dart. Read data from the repositories. Match spacing and text styles. Do not add any color that is not in the palette.
+Read CLAUDE.md. Call get_design_context for ChildHome (node-id 14-2). Build light-client/src/screens/ChildHomeScreen.tsx using the components in light-client/src/widgets and the tokens in light-client/src/theme/tokens.css. Read data through the hooks in data/providers.tsx. Match spacing and text styles. Do not add any color that is not in the palette.
 ```
 
 Build a component:
 ```
-Read CLAUDE.md. Call get_design_context for TaskCard (node-id 12-23). Create light-client/lib/widgets/task_card.dart with parameters done, title, and subtitle. Use tokens only.
+Read CLAUDE.md. Call get_design_context for TaskCard (node-id 12-23). Create light-client/src/widgets/TaskCard.tsx and TaskCard.css with props done, title, and subtitle. Use tokens only.
 ```
 
 Add motion:
 ```
-Add animation to light-client/lib/widgets/pet.dart. Bounce when the mood changes. Flutter the gills when the mood is cheering. Respect MediaQuery disableAnimations.
+Add animation to light-client/src/widgets/Pet.tsx and Pet.css. Bounce when the mood changes. Flap the gills when the mood is cheering. Respect prefers-reduced-motion by using --motion-short.
 ```
 
 Sync tokens after a design change:
 ```
-Compare the color variables and text styles in the Figma file with light-client/lib/theme/app_theme.dart and heavy-client/lib/theme/app_theme.dart. Update both files so every token matches. List what changed.
+Compare the color variables and text styles in the Figma file with light-client/src/theme/tokens.css and heavy-client/src/theme/tokens.css. Update both files so every token matches. List what changed.
 ```
 
 Add a server feature:

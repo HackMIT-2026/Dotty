@@ -1,0 +1,21 @@
+.pet {
+  width: var(--size-pet-stage);
+  height: var(--size-pet-stage);
+  flex: none;
+}
+.pet--small {
+  width: var(--size-pet-small);
+  height: var(--size-pet-small);
+}
+.pet__image {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  object-position: center;
+  animation: pet-fade var(--motion-short) ease-out;
+}
+@keyframes pet-fade {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}

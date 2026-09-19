@@ -1,0 +1,19 @@
+.big-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-8);
+  min-height: var(--size-min-tap-target);
+  padding: 0 var(--space-24);
+  border: 0;
+  border-radius: var(--radius-clinician);
+  color: var(--color-ink);
+  cursor: pointer;
+  transition: filter var(--motion-short);
+}
+.big-button:hover { filter: brightness(0.97); }
+.big-button:active { filter: brightness(0.93); }
+.big-button:focus-visible { outline: var(--border-width) solid var(--color-ink); outline-offset: var(--space-4); }
+.big-button--primary { background: var(--color-coral); }
+.big-button--soft { background: var(--color-lavender); }
+.big-button__icon { flex: none; width: var(--size-icon-inline); height: var(--size-icon-inline); }

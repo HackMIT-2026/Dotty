@@ -1,0 +1,15 @@
+.energy-meter__row { display: flex; align-items: center; gap: var(--space-4); }
+.energy-meter__icon { width: var(--size-icon-inline); height: var(--size-icon-inline); }
+.energy-meter__value { margin-left: auto; }
+.energy-meter__track {
+  margin-top: var(--space-8);
+  height: var(--size-energy-bar-height);
+  overflow: hidden;
+  border-radius: var(--radius-pill);
+  background: var(--color-pond-blue);
+}
+.energy-meter__fill {
+  height: 100%;
+  background: var(--color-coral);
+  transition: width var(--motion-short);
+}

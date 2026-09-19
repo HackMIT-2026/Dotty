@@ -17,18 +17,9 @@ __pycache__/
 venv/
 .pytest_cache/
 
-# Flutter and Dart (light-client, heavy-client)
-.dart_tool/
-.flutter-plugins
-.flutter-plugins-dependencies
-.packages
-.pub-cache/
-.pub/
-build/
-pubspec.lock
-**/android/.gradle/
-**/android/local.properties
-**/ios/Pods/
-**/ios/.symlinks/
-**/macos/Pods/
+# Node (light-client, heavy-client)
+node_modules/
+dist/
+.vite/
+*.tsbuildinfo
 *.iml

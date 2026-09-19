@@ -1,0 +1,39 @@
+.task-card {
+  padding: var(--space-20);
+  border: var(--border-width) solid var(--color-border-soft);
+  border-radius: var(--radius-card);
+  background: var(--color-white);
+  box-shadow: var(--shadow-soft);
+}
+.task-card__head { display: flex; align-items: center; gap: var(--space-16); }
+.task-card__status {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: var(--size-status-icon);
+  height: var(--size-status-icon);
+  border-radius: 50%;
+}
+.task-card__status svg { width: var(--size-icon-inline); height: var(--size-icon-inline); }
+.task-card__status--done { background: var(--color-mint); }
+.task-card__status--waiting { background: var(--color-sunny-amber); }
+.task-card__why {
+  display: flex;
+  align-items: center;
+  gap: var(--space-8);
+  width: 100%;
+  min-height: var(--size-min-tap-target);
+  padding: 0;
+  border: 0;
+  background: none;
+  cursor: pointer;
+  text-align: left;
+}
+.task-card__why svg { width: var(--size-icon-inline); height: var(--size-icon-inline); }
+.task-card__why:focus-visible { outline: var(--border-width) solid var(--color-ink); outline-offset: var(--space-4); }
+.task-card__why-text { padding-bottom: var(--space-8); animation: task-card-open var(--motion-short) ease-out; }
+.task-card__action { margin-top: var(--space-8); }
+@keyframes task-card-open {
+  from { opacity: 0; transform: translateY(calc(-1 * var(--space-4))); }
+  to { opacity: 1; transform: none; }
+}

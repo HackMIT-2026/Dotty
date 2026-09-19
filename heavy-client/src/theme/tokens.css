@@ -1,0 +1,140 @@
+/*
+ * heavy-client/src/theme/tokens.css
+ * Design tokens for Dotty. Figma is the source of truth. Keep this file matching the
+ * Figma variables and text styles. Never type a hex code or font size outside this file.
+ *
+ * Fredoka is bundled as an asset (src/assets/fonts), so it works offline.
+ *
+ * Verified from Figma: all colors except sunny-amber, Heading 1/2, Body, Button, Caption,
+ * card radius 24, card border 2, card padding 20, status icon 44.
+ * UNVERIFIED (from CLAUDE.md, not yet read from Figma): sunny-amber, Display, Body large,
+ * button and clinician radius, the spacing scale, big-button-height, min-tap-target.
+ * Additions marked "new" were added for the first screen build and need a Figma check.
+ */
+
+@font-face {
+  font-family: 'Fredoka';
+  font-weight: 400;
+  font-display: swap;
+  src: url('../assets/fonts/Fredoka-400.ttf') format('truetype');
+}
+@font-face {
+  font-family: 'Fredoka';
+  font-weight: 500;
+  font-display: swap;
+  src: url('../assets/fonts/Fredoka-500.ttf') format('truetype');
+}
+@font-face {
+  font-family: 'Fredoka';
+  font-weight: 600;
+  font-display: swap;
+  src: url('../assets/fonts/Fredoka-600.ttf') format('truetype');
+}
+@font-face {
+  font-family: 'Fredoka';
+  font-weight: 700;
+  font-display: swap;
+  src: url('../assets/fonts/Fredoka-700.ttf') format('truetype');
+}
+
+:root {
+  /* Colors */
+  --color-cream: #fff8f0; /* page background */
+  --color-coral: #f28b82; /* primary, pet body, main buttons */
+  --color-gill-rose: #e56b8a; /* gills and highlights */
+  --color-lavender: #b8a9e8; /* accent, soft buttons, banners */
+  --color-pond-blue: #a9d8ee; /* chips, water, info */
+  --color-mint: #a8e0c8; /* success, always with a check icon */
+  --color-sunny-amber: #f5c26b; /* gentle attention, with a clock icon */
+  --color-ink: #2b2a33; /* text and icons */
+  --color-ink-muted: #6b6875; /* secondary text */
+  --color-white: #ffffff; /* cards and surfaces */
+  --color-border-soft: #eadfd3; /* card borders */
+
+  /* Radius */
+  --radius-card: 24px;
+  --radius-button: 16px;
+  --radius-clinician: 8px;
+  --radius-pill: 999px;
+
+  /* Spacing */
+  --space-4: 4px;
+  --space-8: 8px;
+  --space-12: 12px;
+  --space-16: 16px;
+  --space-20: 20px; /* new: card padding, read from Figma TaskCard, off the 4-48 scale */
+  --space-24: 24px;
+  --space-32: 32px;
+  --space-48: 48px;
+
+  /* Border */
+  --border-width: 2px; /* card border, read from Figma TaskCard */
+
+  /* Sizes */
+  --size-big-button-height: 64px; /* main child buttons */
+  --size-min-tap-target: 48px;
+  --size-status-icon: 44px; /* TaskCard status circle, read from Figma */
+  --size-icon-inline: 24px; /* new: icons next to text */
+  --size-phone-width: 393px; /* design width of the child and parent views */
+  --size-pet-stage: 220px; /* new: pet on the child home */
+  --size-pet-small: 96px; /* new: pet on the parent feed */
+  --size-energy-bar-height: 16px; /* new */
+  --size-clinician-content-max: 1200px; /* new: content width inside the 1440 layout */
+
+  /* One soft shadow: y 4, blur 12, black at 8 percent */
+  --shadow-soft: 0 4px 12px rgba(0, 0, 0, 0.08);
+
+  /* Motion. Drops to zero when the user asked for reduced motion (see below). */
+  --motion-short: 300ms; /* new */
+
+  /* Text styles (Fredoka): size / line height */
+  --font-family: 'Fredoka', system-ui, sans-serif;
+  --text-display-size: 44px; /* Dotty/Display 44/52 Bold (unverified) */
+  --text-display-line: 52px;
+  --text-h1-size: 32px; /* Dotty/Heading 1 32/40 SemiBold */
+  --text-h1-line: 40px;
+  --text-h2-size: 24px; /* Dotty/Heading 2 24/32 SemiBold */
+  --text-h2-line: 32px;
+  --text-body-large-size: 20px; /* Dotty/Body large 20/30 (unverified) */
+  --text-body-large-line: 30px;
+  --text-body-size: 18px; /* Dotty/Body 18/28 */
+  --text-body-line: 28px;
+  --text-button-size: 18px; /* Dotty/Button 18/24 Medium */
+  --text-button-line: 24px;
+  --text-caption-size: 14px; /* Dotty/Caption 14/20 Medium */
+  --text-caption-line: 20px;
+  --text-clinician-size: 16px; /* new: clinician screens may use 16 px (CLAUDE.md rule) */
+  --text-clinician-line: 24px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :root {
+    --motion-short: 0ms;
+  }
+}
+
+/* Text style classes */
+.text-display { font: 700 var(--text-display-size) / var(--text-display-line) var(--font-family); }
+.text-h1 { font: 600 var(--text-h1-size) / var(--text-h1-line) var(--font-family); }
+.text-h2 { font: 600 var(--text-h2-size) / var(--text-h2-line) var(--font-family); }
+.text-body-large { font: 400 var(--text-body-large-size) / var(--text-body-large-line) var(--font-family); }
+.text-body { font: 400 var(--text-body-size) / var(--text-body-line) var(--font-family); }
+.text-body-muted { font: 400 var(--text-body-size) / var(--text-body-line) var(--font-family); color: var(--color-ink-muted); }
+.text-button { font: 500 var(--text-button-size) / var(--text-button-line) var(--font-family); }
+.text-caption { font: 500 var(--text-caption-size) / var(--text-caption-line) var(--font-family); }
+.text-caption-muted { font: 500 var(--text-caption-size) / var(--text-caption-line) var(--font-family); color: var(--color-ink-muted); }
+.text-clinician { font: 400 var(--text-clinician-size) / var(--text-clinician-line) var(--font-family); }
+.text-clinician-medium { font: 500 var(--text-clinician-size) / var(--text-clinician-line) var(--font-family); }
+.text-clinician-muted { font: 400 var(--text-clinician-size) / var(--text-clinician-line) var(--font-family); color: var(--color-ink-muted); }
+
+/* Base */
+*, *::before, *::after { box-sizing: border-box; }
+html, body, #root { min-height: 100%; }
+body {
+  margin: 0;
+  background: var(--color-cream);
+  color: var(--color-ink);
+  font: 400 var(--text-body-size) / var(--text-body-line) var(--font-family);
+}
+h1, h2, h3, p { margin: 0; }
+button { font: inherit; color: inherit; }

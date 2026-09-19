@@ -8,30 +8,33 @@ See [CLAUDE.md](CLAUDE.md) for the full project guide and design rules.
 
 | Folder | What it is |
 |---|---|
-| `light-client/` | Flutter app for the child and parent phone views (393 px) |
-| `heavy-client/` | Flutter web app for the clinician portal (1440 px) |
+| `light-client/` | React (Vite, TypeScript) app for the child and parent phone views (393 px) |
+| `heavy-client/` | React (Vite, TypeScript) web app for the clinician portal (1440 px) |
 | `server/` | Python FastAPI backend with PyMongo and MongoDB |
 
 Clients call the server through a REST API and never touch MongoDB. ElevenLabs is called only from the server.
 
 ## Setup
 
-### Flutter clients
+### Web clients
 
-Install Flutter, then generate the platform folders once in each client (this keeps the existing `lib/` and `pubspec.yaml`):
+Install Node 20 or newer, then install each client once:
 
 ```
-cd light-client && flutter create . --project-name dotty_light_client --platforms=android,ios,web && flutter pub get
-cd heavy-client && flutter create . --project-name dotty_heavy_client --platforms=web && flutter pub get
+cd light-client && npm install
+cd heavy-client && npm install
 ```
 
 Run:
 
 ```
-cd light-client && flutter run                # fake data by default
-cd light-client && flutter run --dart-define=USE_SERVER=true
-cd heavy-client && flutter run -d chrome
+cd light-client && npm run dev      # child and parent, fake data by default
+cd heavy-client && npm run dev      # clinician portal
 ```
+
+Vite prints the local URL (usually http://localhost:5173 for light-client and http://localhost:5174 for heavy-client, or the next free port). It also prints a Network URL: open that on a phone on the same Wi-Fi to try the phone app. Child view is `/#/child`, parent view is `/#/parent`, and `/#/pet-preview` shows all four Pip moods.
+
+To use the server instead of fake data (not built yet), start with `VITE_USE_SERVER=true npm run dev`.
 
 ### Server
 
@@ -47,8 +50,8 @@ Health check: `GET http://localhost:8000/api/health`. MongoDB must be running fo
 
 ## Status
 
-- light-client: child home and parent feed screens built on fake data (Riverpod). Pip is drawn in code as a placeholder until the Figma art is exported.
+- light-client: child home and parent feed screens built on fake data, with the Pip art bundled as images.
 - heavy-client: clinician plan builder built on fake data.
 - server: health check and `POST /api/treatment-plans`. Next: quests, then care events.
-- Not yet verified against Figma: amber, Display and Body large text, button and clinician radii, spacing scale. See the header of `lib/theme/app_theme.dart`.
-- The Flutter code has not been compiled yet. Run `flutter pub get` and `flutter analyze` after installing Flutter.
+- Not yet verified against Figma: amber, Display and Body large text, button and clinician radii, spacing scale. See the header of `src/theme/tokens.css`.
+- The clients were moved from Flutter to React. Both build with `npm run build`.

@@ -1,0 +1,25 @@
+/* Shared by the table header in the plan builder screen. Column ratios 3 : 2 : 4 : 1 : tap target. */
+.plan-grid {
+  display: grid;
+  grid-template-columns: 3fr 2fr 4fr 1fr var(--size-min-tap-target);
+  gap: var(--space-16);
+  align-items: start;
+}
+.plan-row {
+  padding: var(--space-16);
+  border: var(--border-width) solid var(--color-border-soft);
+  border-radius: var(--radius-clinician);
+  background: var(--color-white);
+}
+.plan-row__remove {
+  display: grid;
+  place-items: center;
+  width: var(--size-min-tap-target);
+  height: var(--size-min-tap-target);
+  border: 0;
+  border-radius: 50%;
+  background: none;
+  cursor: pointer;
+}
+.plan-row__remove:hover { background: var(--color-cream); }
+.plan-row__remove svg { width: var(--size-icon-inline); height: var(--size-icon-inline); }
