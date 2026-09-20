@@ -5,7 +5,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { DotCoin, Icon } from '@/components/icon';
 import { Dotty } from '@/components/pet/dotty';
 import { SettingsButton } from '@/components/page-header';
-import { PondBackdrop } from '@/components/pet/scene';
+import { SceneBackdrop } from '@/components/pet/scene';
 import { SpeechBubble } from '@/components/speech-bubble';
 import { SyncBadge } from '@/components/sync-badge';
 import { Card, H2, ProgressBar, Row, Screen, Small } from '@/components/ui';
@@ -52,7 +52,7 @@ export default function ChildHome() {
   return (
     <View style={styles.page}>
       <View style={styles.column}>
-        <PondBackdrop />
+        <SceneBackdrop background={equipped.background} />
         <Screen bleed background="transparent">
           <View style={[styles.hero, { height: heroHeight, paddingTop: insets.top }]}>
             <View style={[styles.topBar, { top: insets.top + S.sm }]}>
@@ -72,7 +72,7 @@ export default function ChildHome() {
           <View style={styles.body}>
             <Card tint={C.glass} style={styles.glassCard}>
               <Row style={{ justifyContent: 'space-between' }}>
-                <View>
+                <View style={{ flexShrink: 1 }}>
                   <H2>{pet?.name ?? 'Dotty'}</H2>
                   <Small>
                     Hi {name ?? 'friend'}! Level {pet?.level ?? 1}

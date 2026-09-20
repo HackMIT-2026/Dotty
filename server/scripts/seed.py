@@ -21,7 +21,7 @@ from app.services.simulator import glucose_model
 from app.util import at_local, new_id, now, zone
 
 FAMILY_CODE = "DEMO42"
-PASSWORD = "demo1234"  # grown-ups
+PASSWORD = "demo1234"  # parents and clinicians
 CHILD_PIN = "1234"  # the child signs in with the family code + this PIN, never an email
 TZ = "America/New_York"
 HISTORY_DAYS = 14
@@ -96,7 +96,7 @@ def build_history(patient_id: str, at: datetime, rng: random.Random) -> list[dic
             units = round_half(carbs / 10)  # parents follow the plan's 1:10
             meals.append((ts, carbs * resistance))
             boluses.append((ts + timedelta(minutes=2), units))
-            out.append(_event(patient_id, "meal", ts, {"carbs_g": carbs, "items": []}))
+            out.append(_event(patient_id, "meal", ts, {"carbs_g": carbs, "items": [], "carbs_source": "parent"}))
             out.append(_event(patient_id, "bolus", ts + timedelta(minutes=2), {"units": units, "reason": "meal", "carbs_g": carbs}, "parent"))
         if rng.random() < 0.7:
             ts, minutes = t("16:30", 45), rng.choice([30, 45, 60])

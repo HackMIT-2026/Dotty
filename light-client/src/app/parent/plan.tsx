@@ -48,7 +48,7 @@ export default function PlanScreen() {
 
   if (!plan) {
     return (
-      <Screen>
+      <Screen background={C.pageCare}>
         <PageHeader title="Treatment settings" />
         <Card>
           <Body>No plan yet. Your care team sets it up in the clinician portal, and it appears here automatically.</Body>
@@ -58,9 +58,9 @@ export default function PlanScreen() {
   }
 
   return (
-    <Screen>
+    <Screen background={C.pageCare}>
       <PageHeader title="Treatment settings" />
-      <Small>
+      <Small color={C.ink}>
         Version {plan.version} · by {clinician ?? 'your care team'} · updated {timeAgo(plan.updated_at, now)}
       </Small>
 
@@ -105,9 +105,9 @@ export default function PlanScreen() {
         </Card>
       ) : null}
 
-      <H2>Notes from your care team</H2>
-      {notes === null ? <Small>Connect to load notes.</Small> : null}
-      {notes?.length === 0 ? <Small>No notes yet.</Small> : null}
+      <H2>Notes from {clinician ?? 'your care team'}</H2>
+      {notes === null ? <Small color={C.ink}>Connect to load notes.</Small> : null}
+      {notes?.length === 0 ? <Small color={C.ink}>No notes yet.</Small> : null}
       {notes?.map((n) => (
         <Card key={n.id}>
           <Small>{n.author_name ? `${n.author_name} · ` : ''}{dayLabel(n.created_at, now)}</Small>

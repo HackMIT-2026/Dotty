@@ -38,11 +38,12 @@ export const Small = ({ children, style, color = C.inkSoft, numberOfLines }: Tex
   <Text numberOfLines={numberOfLines} style={[t.small, { color }, style]}>{children}</Text>
 );
 
+// flexShrink 1 lets text wrap inside a row instead of running off the card (a phone does not shrink text in a row by itself)
 const t = StyleSheet.create({
-  h1: { ...font('900'), fontSize: 28, letterSpacing: -0.3 },
-  h2: { ...font('800'), fontSize: 19 },
-  body: { ...font('600'), fontSize: 16, lineHeight: 22 },
-  small: { ...font('700'), fontSize: 13, lineHeight: 18 },
+  h1: { ...font('900'), fontSize: 28, letterSpacing: -0.3, flexShrink: 1 },
+  h2: { ...font('800'), fontSize: 19, flexShrink: 1 },
+  body: { ...font('600'), fontSize: 16, lineHeight: 22, flexShrink: 1 },
+  small: { ...font('700'), fontSize: 13, lineHeight: 18, flexShrink: 1 },
 });
 
 // ---------- layout ----------
@@ -142,11 +143,11 @@ export function Button({ title, onPress, variant = 'primary', size = 'md', disab
   );
 }
 
-export function Chip({ label, selected, onPress, icon, image }: { label: string; selected?: boolean; onPress: () => void; icon?: IconName; image?: ImageSourcePropType }) {
+export function Chip({ label, selected, onPress, icon, image, art }: { label: string; selected?: boolean; onPress: () => void; icon?: IconName; image?: ImageSourcePropType; art?: ReactNode }) {
   const fg = selected ? '#fff' : C.ink;
   return (
     <Pressable onPress={onPress} style={({ pressed }) => [styles.chip, selected && styles.chipOn, pressed && { opacity: 0.8 }]}>
-      {image ? <Image source={image} style={{ width: 26, height: 26 }} resizeMode="contain" /> : icon ? <Icon name={icon} size={17} color={selected ? '#fff' : C.primary} /> : null}
+      {art ? art : image ? <Image source={image} style={{ width: 26, height: 26 }} resizeMode="contain" /> : icon ? <Icon name={icon} size={17} color={selected ? '#fff' : C.primary} /> : null}
       <Text style={[t.small, { color: fg, fontSize: 14 }]}>{label}</Text>
     </Pressable>
   );

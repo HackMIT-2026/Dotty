@@ -119,7 +119,8 @@ def test_each_task_kind_is_completed_by_the_right_event(client, family):
 
 def test_finished_quests_move_to_the_bottom_of_the_child_list(client, family):
     add_task(client, family, title="Now", time=hhmm_now())
-    add_task(client, family, title="Later", time="23:59" if local_now().hour < 22 else "23:58")
+    # a free-form task: only a "Done!" tap finishes it, so it stays unfinished whatever time the test runs at
+    add_task(client, family, title="Later", kind="custom", time=None)
     push(client, family["child"], make_event("reading", {"bg_mgdl": 120}))
     plan = client.get(f"/pet/{family['pid']}", headers=family["child"]["h"]).json()["quests"]["plan"]
     assert [q["status"] for q in plan] == ["upcoming", "done"]  # still to do first, finished last

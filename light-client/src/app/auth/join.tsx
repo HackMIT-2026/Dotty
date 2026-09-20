@@ -1,6 +1,6 @@
 import { router } from 'expo-router';
 import { useState } from 'react';
-import { View } from 'react-native';
+import { Image, View } from 'react-native';
 
 import { PIN_LENGTH, PinPad } from '@/components/pin-pad';
 import { Body, Button, Card, Chip, Field, H1, H2, Row, Screen, Small } from '@/components/ui';
@@ -55,8 +55,8 @@ export default function Join() {
     <Screen>
       <H1 style={{ marginTop: S.md }}>Create an account</H1>
       <Row>
-        <Chip label="I'm a parent" icon="account-heart" selected={role === 'parent'} onPress={() => setRole('parent')} />
-        <Chip label="I'm a kid" icon="human-child" selected={role === 'child'} onPress={() => setRole('child')} />
+        <Chip label="I'm the parent" icon="account-heart" art={<Image source={require('@/assets/icons/old.png')} style={{ width: 34, height: 34 }} resizeMode="contain" />} selected={role === 'parent'} onPress={() => setRole('parent')} />
+        <Chip label="I'm a kid" icon="human-child" art={<Image source={require('@/assets/icons/baby.png')} style={{ width: 34, height: 34 }} resizeMode="contain" />} selected={role === 'child'} onPress={() => setRole('child')} />
       </Row>
 
       {role === 'child' ? (
@@ -64,7 +64,7 @@ export default function Join() {
           <H2>Join your family</H2>
           <Field label="Your first name" value={name} onChangeText={setName} autoCapitalize="words" placeholder="Maya" />
           <Field
-            label="Family code (ask your grown-up)"
+            label="Family code (ask your parent)"
             value={code}
             onChangeText={(v) => setCode(v.toUpperCase().slice(0, 6))}
             autoCapitalize="characters"

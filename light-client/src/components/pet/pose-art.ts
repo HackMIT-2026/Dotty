@@ -18,7 +18,7 @@ export interface PoseArt {
 export const POSE_ART = {
   happy: {
     aspect: 1.0953,
-    pad: [0.0593, 0.0649],
+    pad: [0.1, 0.1095],
     frames: [
       require('@/assets/pet/anim/happy/tail-0.webp'),
       require('@/assets/pet/anim/happy/tail-1.webp'),
@@ -33,6 +33,22 @@ export const POSE_ART = {
       require('@/assets/pet/anim/happy/tail-10.webp'),
       require('@/assets/pet/anim/happy/tail-11.webp'),
       require('@/assets/pet/anim/happy/tail-12.webp'),
+      require('@/assets/pet/anim/happy/tail-13.webp'),
+      require('@/assets/pet/anim/happy/tail-14.webp'),
+      require('@/assets/pet/anim/happy/tail-15.webp'),
+      require('@/assets/pet/anim/happy/tail-16.webp'),
+      require('@/assets/pet/anim/happy/tail-17.webp'),
+      require('@/assets/pet/anim/happy/tail-18.webp'),
+      require('@/assets/pet/anim/happy/tail-19.webp'),
+      require('@/assets/pet/anim/happy/tail-20.webp'),
+      require('@/assets/pet/anim/happy/tail-21.webp'),
+      require('@/assets/pet/anim/happy/tail-22.webp'),
+      require('@/assets/pet/anim/happy/tail-23.webp'),
+      require('@/assets/pet/anim/happy/tail-24.webp'),
+      require('@/assets/pet/anim/happy/tail-25.webp'),
+      require('@/assets/pet/anim/happy/tail-26.webp'),
+      require('@/assets/pet/anim/happy/tail-27.webp'),
+      require('@/assets/pet/anim/happy/tail-28.webp'),
     ],
     mouth: { src: require('@/assets/pet/anim/happy/mouth.webp'), box: [0.4296, 0.3712, 0.1481, 0.1055] },
     marks: [
@@ -42,7 +58,7 @@ export const POSE_ART = {
   },
   curious: {
     aspect: 1.1694,
-    pad: [0.0601, 0.0702],
+    pad: [0.1007, 0.1178],
     frames: [
       require('@/assets/pet/anim/curious/tail-0.webp'),
       require('@/assets/pet/anim/curious/tail-1.webp'),
@@ -57,6 +73,14 @@ export const POSE_ART = {
       require('@/assets/pet/anim/curious/tail-10.webp'),
       require('@/assets/pet/anim/curious/tail-11.webp'),
       require('@/assets/pet/anim/curious/tail-12.webp'),
+      require('@/assets/pet/anim/curious/tail-13.webp'),
+      require('@/assets/pet/anim/curious/tail-14.webp'),
+      require('@/assets/pet/anim/curious/tail-15.webp'),
+      require('@/assets/pet/anim/curious/tail-16.webp'),
+      require('@/assets/pet/anim/curious/tail-17.webp'),
+      require('@/assets/pet/anim/curious/tail-18.webp'),
+      require('@/assets/pet/anim/curious/tail-19.webp'),
+      require('@/assets/pet/anim/curious/tail-20.webp'),
     ],
     mouth: { src: require('@/assets/pet/anim/curious/mouth.webp'), box: [0.4753, 0.376, 0.0777, 0.0909] },
     marks: [
@@ -65,7 +89,7 @@ export const POSE_ART = {
   },
   cheering: {
     aspect: 1.2029,
-    pad: [0.0596, 0.0717],
+    pad: [0.0997, 0.1199],
     frames: [
       require('@/assets/pet/anim/cheering/tail-0.webp'),
       require('@/assets/pet/anim/cheering/tail-1.webp'),
@@ -80,6 +104,14 @@ export const POSE_ART = {
       require('@/assets/pet/anim/cheering/tail-10.webp'),
       require('@/assets/pet/anim/cheering/tail-11.webp'),
       require('@/assets/pet/anim/cheering/tail-12.webp'),
+      require('@/assets/pet/anim/cheering/tail-13.webp'),
+      require('@/assets/pet/anim/cheering/tail-14.webp'),
+      require('@/assets/pet/anim/cheering/tail-15.webp'),
+      require('@/assets/pet/anim/cheering/tail-16.webp'),
+      require('@/assets/pet/anim/cheering/tail-17.webp'),
+      require('@/assets/pet/anim/cheering/tail-18.webp'),
+      require('@/assets/pet/anim/cheering/tail-19.webp'),
+      require('@/assets/pet/anim/cheering/tail-20.webp'),
     ],
     mouth: { src: require('@/assets/pet/anim/cheering/mouth.webp'), box: [0.379, 0.2807, 0.1908, 0.2541] },
     marks: [
@@ -91,7 +123,7 @@ export const POSE_ART = {
   },
   sleepy: {
     aspect: 1.3333,
-    pad: [0.0601, 0.0801],
+    pad: [0.1001, 0.1335],
     frames: [
       require('@/assets/pet/anim/sleepy/tail-0.webp'),
       require('@/assets/pet/anim/sleepy/tail-1.webp'),
@@ -106,6 +138,14 @@ export const POSE_ART = {
       require('@/assets/pet/anim/sleepy/tail-10.webp'),
       require('@/assets/pet/anim/sleepy/tail-11.webp'),
       require('@/assets/pet/anim/sleepy/tail-12.webp'),
+      require('@/assets/pet/anim/sleepy/tail-13.webp'),
+      require('@/assets/pet/anim/sleepy/tail-14.webp'),
+      require('@/assets/pet/anim/sleepy/tail-15.webp'),
+      require('@/assets/pet/anim/sleepy/tail-16.webp'),
+      require('@/assets/pet/anim/sleepy/tail-17.webp'),
+      require('@/assets/pet/anim/sleepy/tail-18.webp'),
+      require('@/assets/pet/anim/sleepy/tail-19.webp'),
+      require('@/assets/pet/anim/sleepy/tail-20.webp'),
     ],
     mouth: { src: require('@/assets/pet/anim/sleepy/mouth.webp'), box: [0.3232, 0.674, 0.1022, 0.081] },
     marks: [

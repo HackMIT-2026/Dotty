@@ -3,6 +3,7 @@ import os
 # Must be set before the app is imported. Tests use their own database, never the demo one.
 os.environ["MONGO_DB"] = "dotty_test"
 os.environ["DOTTY_DISABLE_SCHEDULER"] = "1"
+os.environ["ANTHROPIC_API_KEY"] = ""  # carb estimates fall back to the food table: tests never call the API
 
 import uuid
 from datetime import datetime, timedelta, timezone

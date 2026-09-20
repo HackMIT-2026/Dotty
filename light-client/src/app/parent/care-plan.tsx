@@ -1,6 +1,5 @@
 import { StyleSheet, Text, View } from 'react-native';
 
-import { Icon, IconTile, type IconName } from '@/components/icon';
 import { PageHeader } from '@/components/page-header';
 import { Body, Card, H2, ProgressBar, Row, Screen, Small } from '@/components/ui';
 import { C, R, S, font } from '@/constants/theme';
@@ -8,19 +7,20 @@ import { useStore } from '@/lib/store';
 import { planHistory, planToday, type PlanItem } from '@/lib/tasks';
 import { clock, useNow } from '@/lib/time';
 import type { TaskKind } from '@/lib/types';
+import { ParentIcon, type ParentIconName } from '@/components/parent-icon';
 
-const KIND: Record<TaskKind, { icon: IconName; label: string }> = {
-  check: { icon: 'heart-pulse', label: 'Glucose check' },
-  medicine: { icon: 'needle', label: 'Insulin / medicine' },
-  meal: { icon: 'silverware-fork-knife', label: 'Meal' },
-  activity: { icon: 'run', label: 'Activity' },
-  custom: { icon: 'star-four-points', label: 'Task' },
+const KIND: Record<TaskKind, { sticker: ParentIconName; label: string }> = {
+  check: { sticker: 'glucose', label: 'Glucose check' },
+  medicine: { sticker: 'medicine', label: 'Insulin / medicine' },
+  meal: { sticker: 'meal', label: 'Meal' },
+  activity: { sticker: 'activity', label: 'Activity' },
+  custom: { sticker: 'star', label: 'Task' },
 };
 
 const STATUS = {
-  done: { color: C.mint, tint: C.mintSoft, icon: 'check-bold' as IconName, label: 'Done' },
-  pending: { color: '#B7791F', tint: C.sunSoft, icon: 'clock-outline' as IconName, label: 'Due' },
-  missed: { color: C.danger, tint: C.dangerSoft, icon: 'alert-circle-outline' as IconName, label: 'Missed' },
+  done: { color: C.mint, tint: C.mintSoft, sticker: 'check' as ParentIconName, label: 'Done' },
+  pending: { color: '#B7791F', tint: C.sunSoft, sticker: 'clock' as ParentIconName, label: 'Due' },
+  missed: { color: C.danger, tint: C.dangerSoft, sticker: 'alert' as ParentIconName, label: 'Missed' },
 };
 
 /** One care-plan task for the parent: the doctor's wording, the instructions and today's state. */
@@ -30,9 +30,12 @@ function TaskRow({ item }: { item: PlanItem }) {
   return (
     <Card>
       <Row style={{ alignItems: 'flex-start', gap: S.md }}>
-        <IconTile name={look.icon} color="#fff" tint={look.color} size={44} />
+        <ParentIcon name={look.sticker} size={48} />
         <View style={{ flex: 1, gap: 2 }}>
-          <Body style={font('800')}>{task.title ?? task.quest_title}</Body>
+          <Row style={{ gap: 6 }}>
+            <ParentIcon name={KIND[task.kind].sticker} size={26} />
+            <Body style={font('800')}>{task.title ?? task.quest_title}</Body>
+          </Row>
           <Small>
             {task.time ? `${task.time} ±${task.window_min} min` : 'Any time today'} · {KIND[task.kind].label}
             {task.kind === 'activity' && task.target_minutes ? ` · ${task.target_minutes} min` : ''}
@@ -65,7 +68,7 @@ export default function ParentCarePlan() {
 
   if (plan.total === 0) {
     return (
-      <Screen>
+      <Screen background={C.pageQuests}>
         <PageHeader title="Care plan" />
         <Card>
           <Body>
@@ -78,7 +81,7 @@ export default function ParentCarePlan() {
   }
 
   return (
-    <Screen>
+    <Screen background={C.pageQuests}>
       <PageHeader title="Care plan" />
 
       <Card tint={plan.done === plan.total ? C.mintSoft : C.card}>
@@ -97,12 +100,12 @@ export default function ParentCarePlan() {
 
       <Card>
         <H2>Last 7 days</H2>
-        <Row style={{ justifyContent: 'space-between', marginTop: S.sm }}>
+        <Row style={{ marginTop: S.sm, gap: 4 }}>
           {history.map((d) => {
             const full = d.total > 0 && d.done === d.total;
             const none = d.done === 0;
             return (
-              <View key={d.date} style={{ alignItems: 'center', gap: 4 }}>
+              <View key={d.date} style={{ flex: 1, alignItems: 'center', gap: 4 }}>
                 <View
                   style={[
                     styles.day,
@@ -121,7 +124,7 @@ export default function ParentCarePlan() {
 
       <Card tint={C.primarySoft}>
         <Row>
-          <Icon name="information-outline" size={20} color={C.primaryDark} />
+          <ParentIcon name="info" size={26} />
           <Small color={C.primaryDark} style={{ flex: 1 }}>
             {patient?.name ?? 'Your child'} sees these as quests with playful names and Dots — never the doses or instructions above.
           </Small>
@@ -134,6 +137,7 @@ export default function ParentCarePlan() {
 const styles = StyleSheet.create({
   badge: { borderRadius: R.pill, paddingHorizontal: 10, paddingVertical: 3 },
   badgeText: { ...font('800'), fontSize: 12 },
-  day: { width: 40, height: 40, borderRadius: R.md, alignItems: 'center', justifyContent: 'center' },
+  // seven of these share the card's width, so they shrink on small phones instead of running off the edge
+  day: { width: '100%', maxWidth: 40, aspectRatio: 1, borderRadius: R.md, alignItems: 'center', justifyContent: 'center' },
   dayText: { ...font('800'), fontSize: 13 },
 });

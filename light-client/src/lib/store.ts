@@ -3,6 +3,7 @@ import { create } from 'zustand';
 import { createJSONStorage, persist } from 'zustand/middleware';
 
 import { newId } from './ids';
+import { logGuard } from './limits';
 import type {
   AppNotification,
   CareTask,
@@ -21,6 +22,7 @@ const MAX_EVENTS = 3000;
 
 /** Dots a log will earn, shown right away while offline. The server is the authority once synced. */
 export function previewDots(e: DotEvent): number {
+  if (e.noDots) return 0; // logged again too soon: the server won't pay for it, so Dotty must not promise it
   switch (e.type) {
     case 'reading':
     case 'meal':
@@ -155,6 +157,7 @@ export const useStore = create<State>()(
           ts: new Date().toISOString(),
           source: role === 'parent' ? 'parent' : 'manual',
           data,
+          ...(role === 'child' && !logGuard(get().events, type, Date.now()).ok ? { noDots: true } : {}),
         };
         set((s) => ({
           events: mergeEvents(s.events, [event]),

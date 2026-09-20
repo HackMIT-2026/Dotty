@@ -12,7 +12,7 @@ export const C = {
   ink: '#2B2A33',
   inkSoft: '#6B6875',
   line: '#EADFD3', // card borders
-  primary: '#F28B82', // coral: main buttons, Pip's body
+  primary: '#F28B82', // coral: main buttons, Dotty's body
   primaryDark: '#E56B8A', // gill rose: pressed states and headings on soft fills
   primarySoft: '#FDEDEB',
   lavender: '#B8A9E8', // accent, soft buttons, banners
@@ -31,6 +31,8 @@ export const C = {
   pageQuests: '#84D6CB',
   barQuests: '#9DE0D7',
   pageShop: '#7CC8F0',
+  pageInbox: '#CBBFF2',
+  barInbox: '#DBD1F7',
   barShop: '#98D5F5',
   sand: '#F3DFB4', // the sand in the kid's pond scene: the child tab bar
   glass: 'rgba(255, 255, 255, 0.82)', // frosted white panels over the scene

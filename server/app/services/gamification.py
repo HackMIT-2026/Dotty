@@ -1,6 +1,7 @@
 """Turns logged behaviors into Dots, streaks, quests, badges and Dotty's mood.
 
-Principle: reward habits (checking, logging, moving), never glucose values. The simulator never earns rewards.
+Principle: reward habits (checking, logging, moving), never glucose values. The simulator never earns rewards,
+and neither does anything services/integrity.py marked `suspect`: Dots are for care that happened.
 The doctor's care plan (services/tasks.py) weighs most: each task pays its own `reward_dots`, the whole plan pays a
 bonus, and Dotty's mood and "Love" follow it. Good habits (meals, play) keep their smaller rewards.
 """
@@ -22,6 +23,9 @@ DOTS_ACTIVITY_EXTRA_CAP = 30
 DOTS_PLAN_BONUS = 50
 DOTS_HIGH_FIVE = 5
 MAX_REWARDED_READINGS_PER_DAY = 8
+# How many logs of each kind can pay in a local day. Past the cap Dotty still says thank you, the Dots stop:
+# a child with a meter in one hand should never be able to out-earn a child who just cares for Dotty properly.
+MAX_REWARDED_PER_DAY = {"reading": MAX_REWARDED_READINGS_PER_DAY, "meal": 5, "activity": 4, "bolus": 6, "basal": 6}
 STREAK_MIN_READINGS = 3
 STREAK_MILESTONES = {3: 30, 7: 100, 30: 500}
 SLEEPY_AFTER_HOURS = 4
@@ -84,7 +88,7 @@ def compute_streak(patient_id: str, tz, today: date) -> tuple[int, date | None]:
     """Consecutive local days with >= 3 readings, ending today (or yesterday, since today is still in progress)."""
     since = day_bounds(today - timedelta(days=60), tz)[0]
     cursor = db.events.find(
-        {"patient_id": patient_id, "type": "reading", "source": {"$ne": "simulator"}, "ts": {"$gte": since}}, {"ts": 1}
+        {"patient_id": patient_id, "type": "reading", **db.TRUSTED, "ts": {"$gte": since}}, {"ts": 1}
     )
     counts = Counter(e["ts"].astimezone(tz).date() for e in cursor)
     good = {d for d, c in counts.items() if c >= STREAK_MIN_READINGS}
@@ -145,36 +149,46 @@ def process_events(patient_id: str, new_events: list[dict], tz_name: str | None,
     pet.setdefault("task_awards", [])
     rewards: list[dict] = []
     level_before = 1 + pet["xp"] // DOTS_PER_LEVEL
-    rewarded_readings: dict[date, int] = {}
+    rewarded: dict[tuple[str, date], int] = {}
     bedtime_check = False
 
-    real = sorted((e for e in new_events if e["source"] != "simulator"), key=lambda e: e["ts"])
-    new_reading_days = Counter(e["ts"].astimezone(tz).date() for e in real if e["type"] == "reading")
+    real = sorted((e for e in new_events if e["source"] != "simulator" and not e.get("suspect")), key=lambda e: e["ts"])
+    new_per_day = Counter((e["type"], e["ts"].astimezone(tz).date()) for e in real)
+
+    def within_cap(e: dict) -> bool:
+        """Has this kind of log still got Dots left today? Counted from the database, so retries can't pay twice."""
+        cap = MAX_REWARDED_PER_DAY.get(e["type"])
+        if cap is None:
+            return True
+        key = (e["type"], e["ts"].astimezone(tz).date())
+        if key not in rewarded:
+            start, end = day_bounds(key[1], tz)
+            total = db.events.count_documents(
+                {"patient_id": patient_id, "type": e["type"], **db.TRUSTED, "ts": {"$gte": start, "$lt": end}}
+            )
+            rewarded[key] = total - new_per_day[key]  # what was already there before this batch
+        rewarded[key] += 1
+        return rewarded[key] <= cap
 
     for e in real:
         d = e["data"]
         if e["type"] == "reading":
-            day = e["ts"].astimezone(tz).date()
-            if day not in rewarded_readings:
-                start, end = day_bounds(day, tz)
-                total = db.events.count_documents(
-                    {"patient_id": patient_id, "type": "reading", "source": {"$ne": "simulator"}, "ts": {"$gte": start, "$lt": end}}
-                )
-                rewarded_readings[day] = total - new_reading_days[day]  # readings already there before this batch
-            rewarded_readings[day] += 1
             if pet["last_checkup_at"] is None or e["ts"] > pet["last_checkup_at"]:
                 pet["last_checkup_at"] = e["ts"]
-            if rewarded_readings[day] <= MAX_REWARDED_READINGS_PER_DAY:
+            if within_cap(e):
                 _award(pet, rewards, DOTS_READING, "Check-up done!")
             if e["ts"].astimezone(tz).hour >= 20:
                 bedtime_check = True
         elif e["type"] == "meal":
-            _award(pet, rewards, DOTS_MEAL, "Dotty ate with you!")
+            if within_cap(e):
+                _award(pet, rewards, DOTS_MEAL, "Dotty ate with you!")
         elif e["type"] == "activity":
-            extra = min(DOTS_ACTIVITY_EXTRA_CAP, DOTS_ACTIVITY_PER_15MIN * (int(d.get("minutes", 0)) // 15))
-            _award(pet, rewards, DOTS_ACTIVITY + extra, "Dotty played with you!")
+            if within_cap(e):
+                extra = min(DOTS_ACTIVITY_EXTRA_CAP, DOTS_ACTIVITY_PER_15MIN * (int(d.get("minutes", 0)) // 15))
+                _award(pet, rewards, DOTS_ACTIVITY + extra, "Dotty played with you!")
         elif e["type"] in ("bolus", "basal"):
-            _award(pet, rewards, DOTS_MEDICINE, "Medicine time done!")
+            if within_cap(e):
+                _award(pet, rewards, DOTS_MEDICINE, "Medicine time done!")
 
     today = at.astimezone(tz).date()
     days = {today} | {e["ts"].astimezone(tz).date() for e in real}
@@ -205,7 +219,7 @@ def _update_streak(pet, patient_id, tz, today, rewards) -> None:
 
 def _evaluate_badges(pet, patient_id, rewards, bedtime_check: bool) -> None:
     def count(t: str) -> int:
-        return db.events.count_documents({"patient_id": patient_id, "type": t, "source": {"$ne": "simulator"}})
+        return db.events.count_documents({"patient_id": patient_id, "type": t, **db.TRUSTED})
 
     earned = {
         "first_week": pet["streak_days"] >= 7,
@@ -261,7 +275,7 @@ def pet_view(pet: dict, tz_name: str | None, at=None) -> dict:
     at = at or now()
     tz = zone(tz_name)
     today = at.astimezone(tz).date()
-    last = db.events.find_one({"patient_id": pet["_id"], "type": "reading"}, sort=[("ts", -1)])
+    last = db.events.find_one({"patient_id": pet["_id"], "type": "reading", "suspect": {"$ne": True}}, sort=[("ts", -1)])
     summary = care.day_summary(pet["_id"], today, tz, at)
     mood = compute_mood(last, at, any(s["status"] == "missed" for s in summary))
     view = {k: v for k, v in pet.items() if k not in ("_id", "streak_awards", "task_awards", "quest_bonus_date")}

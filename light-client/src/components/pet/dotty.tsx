@@ -1,8 +1,8 @@
 /**
- * Pip, the pet. The body is the artwork from the `gloria` branch (one image per mood); the shop's hats and
- * accessories are drawn as SVG on top, and a colour item becomes the glow behind Pip.
+ * Dotty, the pet. The body is the artwork from the `gloria` branch (one image per mood); the shop's hats and
+ * accessories are drawn as SVG on top, and a colour item becomes the glow behind Dotty.
  *
- * Each pose has its own anchor (where the head sits in that image), so a hat lands correctly whether Pip is
+ * Each pose has its own anchor (where the head sits in that image), so a hat lands correctly whether Dotty is
  * sitting, curious or asleep. Anchors are fractions of the image, measured from the artwork.
  */
 import { useEffect, useState } from 'react';
@@ -38,7 +38,7 @@ const POSES = {
 
 type PoseName = keyof typeof POSES;
 
-/** Pip's face for each of Dotty's moods. `cheering` is used for a moment when the child earns something. */
+/** Dotty's face for each of Dotty's moods. `cheering` is used for a moment when the child earns something. */
 const MOOD_POSE: Record<Mood, PoseName> = {
   bouncy: 'happy',
   sleepy: 'sleepy',
@@ -47,7 +47,7 @@ const MOOD_POSE: Record<Mood, PoseName> = {
   waiting: 'curious',
 };
 
-/** How each colour item recolours Pip's body (`null` keeps the artwork's own pink). */
+/** How each colour item recolours Dotty's body (`null` keeps the artwork's own pink). */
 export const BODY_TINT: Record<string, string | null> = {
   color_sky: null,
   color_mint: '#3DCB9A',
@@ -56,7 +56,7 @@ export const BODY_TINT: Record<string, string | null> = {
   color_gold: '#FFC61A',
 };
 
-/** Colour items become the soft glow behind Pip (the artwork itself keeps its own colours). */
+/** Colour items become the soft glow behind Dotty (the artwork itself keeps its own colours). */
 export const BODY_COLORS: Record<string, { fill: string; shade: string; cheek: string }> = {
   color_sky: { fill: '#A9D8EE', shade: '#7FC3E4', cheek: '#FF9EC4' },
   color_mint: { fill: '#A8E0C8', shade: '#7FCFAE', cheek: '#FF9EB0' },
@@ -85,7 +85,7 @@ function Hat({ id }: { id: string | null }) {
         <G>
           <Path d="M10 96 q40 -78 80 0 z" fill="#E5534B" />
           <Path d="M78 92 q28 -4 40 8 q-20 8 -42 0z" fill="#C13F38" />
-          <Circle cx={50} cy={46} r={6} fill="#C13F38" />
+          <Circle cx={50} cy={57} r={6} fill="#C13F38" />
         </G>
       );
     case 'hat_beanie':
@@ -93,7 +93,7 @@ function Hat({ id }: { id: string | null }) {
         <G>
           <Path d="M8 92 q42 -92 84 0 z" fill="#2FBF8F" />
           <Rect x={4} y={80} width={92} height={18} rx={9} fill="#239C74" />
-          <Circle cx={50} cy={16} r={13} fill="#FFF3B0" />
+          <Circle cx={50} cy={46} r={12} fill="#FFF3B0" />
         </G>
       );
     case 'hat_party':
@@ -131,7 +131,7 @@ interface DottyProps {
   equipped: Equipped;
   mood?: Mood;
   size?: number;
-  /** Increment to make Pip cheer. */
+  /** Increment to make Dotty cheer. */
   cheer?: number;
   animated?: boolean;
 }

@@ -14,6 +14,25 @@ router = APIRouter(tags=["sync"])
 
 INITIAL_PULL_DAYS = 14
 
+# Carb counting and doses are the grown-ups' job: the child's app is never sent the numbers, so no screen can
+# leak them and no "how many grams is a cookie?" habit can start. Flags stay hidden too — a child who can see
+# what tripped the spam check can work around it.
+CHILD_HIDDEN_DATA = ("carbs_g", "carbs_source", "needs_parent", "units", "note")
+
+
+def _event_view(event: dict, role: str) -> dict:
+    if role != "child":
+        return pub(event)
+    data = event["data"]
+    if event["type"] in ("meal", "bolus", "basal"):
+        data = {k: v for k, v in data.items() if k not in CHILD_HIDDEN_DATA}
+        if data.get("items"):
+            data["items"] = [{k: v for k, v in i.items() if k not in ("carbs", "note", "source")} for i in data["items"]]
+    out = pub({**event, "data": data})
+    out.pop("flags", None)
+    out.pop("suspect", None)
+    return out
+
 
 def _tz(user: dict) -> str | None:
     fam = family_of(user)
@@ -63,7 +82,7 @@ def pull(since: datetime | None = None, user: dict = Depends(require_role("child
         "server_time": server_time,
         "settings": {"glucose_unit": fam.get("glucose_unit", "mg/dL")},
         "patient": {"id": pid, "name": child["name"]},
-        "events": [pub(e) for e in events],
+        "events": [_event_view(e, user["role"]) for e in events],
         "plan": pub(db.plans.find_one({"patient_id": pid})),
         # the doctor's care plan: full detail for the parent, the game view only for the child
         "tasks": [(care.child_view if user["role"] == "child" else care.full_view)(t) for t in care.active_tasks(pid)],
