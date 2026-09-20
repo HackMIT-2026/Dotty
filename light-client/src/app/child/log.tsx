@@ -200,7 +200,7 @@ export default function Log() {
   }, [params.mode]);
 
   return (
-    <Screen>
+    <Screen background={C.pageCare}>
       <PageHeader title="Care" />
       <View style={styles.modes}>
         {CARE_ACTIONS.map((m) => (

@@ -7,6 +7,7 @@ import { useEffect, useState } from 'react';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 
+import { ConfettiHost } from '@/components/confetti-host';
 import { ToastHost } from '@/components/toast-host';
 import { C } from '@/constants/theme';
 import { useStore } from '@/lib/store';
@@ -62,6 +63,7 @@ export default function RootLayout() {
           </Stack.Protected>
         </Stack>
         <ToastHost />
+        <ConfettiHost />
       </SafeAreaProvider>
     </GestureHandlerRootView>
   );

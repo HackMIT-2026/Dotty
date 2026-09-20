@@ -20,6 +20,7 @@ import Svg, { Circle, Ellipse, G, Path, Polygon, Rect } from 'react-native-svg';
 
 import type { Mood, Pet } from '@/lib/types';
 
+import { BackAccessory, FrontAccessory, POSE_POINTS } from './accessories';
 import { PoseArtView } from './pose-art-view';
 
 type Equipped = Pet['equipped'];
@@ -44,6 +45,15 @@ const MOOD_POSE: Record<Mood, PoseName> = {
   sluggish: 'curious',
   shaky: 'curious',
   waiting: 'curious',
+};
+
+/** How each colour item recolours Pip's body (`null` keeps the artwork's own pink). */
+export const BODY_TINT: Record<string, string | null> = {
+  color_sky: null,
+  color_mint: '#3DCB9A',
+  color_sunset: '#FF9A3D',
+  color_grape: '#9B6BE8',
+  color_gold: '#FFC61A',
 };
 
 /** Colour items become the soft glow behind Pip (the artwork itself keeps its own colours). */
@@ -117,45 +127,6 @@ function Hat({ id }: { id: string | null }) {
   }
 }
 
-/** Accessories are drawn in a 100x100 box centred on the head. */
-function Accessory({ id }: { id: string | null }) {
-  switch (id) {
-    case 'acc_glasses':
-      return (
-        <G stroke="#3B2A46" strokeWidth={5} fill="rgba(255,255,255,0.35)">
-          <Circle cx={26} cy={50} r={20} />
-          <Circle cx={74} cy={50} r={20} />
-          <Path d="M46 48 q4 -6 8 0" fill="none" />
-        </G>
-      );
-    case 'acc_headphones':
-      return (
-        <G>
-          <Path d="M6 52 q44 -66 88 0" stroke="#3B2A46" strokeWidth={9} fill="none" />
-          <Rect x={-2} y={40} width={22} height={38} rx={10} fill="#E56B8A" />
-          <Rect x={80} y={40} width={22} height={38} rx={10} fill="#E56B8A" />
-        </G>
-      );
-    case 'acc_bowtie':
-      return (
-        <G>
-          <Polygon points="50,50 20,32 20,68" fill="#E5534B" />
-          <Polygon points="50,50 80,32 80,68" fill="#E5534B" />
-          <Circle cx={50} cy={50} r={9} fill="#C13F38" />
-        </G>
-      );
-    case 'acc_scarf':
-      return (
-        <G>
-          <Path d="M2 34 q48 30 96 0 l0 20 q-48 30 -96 0z" fill="#F5C26B" />
-          <Rect x={66} y={50} width={18} height={40} rx={7} fill="#E8A945" />
-        </G>
-      );
-    default:
-      return null;
-  }
-}
-
 interface DottyProps {
   equipped: Equipped;
   mood?: Mood;
@@ -210,8 +181,7 @@ export function Dotty({ equipped, mood = 'bouncy', size = 220, cheer = 0, animat
   const headTop = imgTop + pose.head.top * imgH;
 
   const hatW = headW * 1.12;
-  const accessoryW = headW * 1.15;
-  const accessoryTop = headTop + headW * 0.3;
+  const pts = POSE_POINTS[poseName];
 
   return (
     <Animated.View style={[{ width: size, height: size }, style]}>
@@ -222,16 +192,18 @@ export function Dotty({ equipped, mood = 'bouncy', size = 220, cheer = 0, animat
         ]}
       />
       <View style={{ marginTop: imgTop, width: imgW, height: imgH }}>
-        <PoseArtView key={poseName} pose={poseName} width={imgW} height={imgH} animate={animated} />
-      </View>
-
-      {equipped.accessory ? (
-        <View style={[styles.layer, { left: headCx - accessoryW / 2, top: accessoryTop, width: accessoryW, height: accessoryW }]}>
-          <Svg width="100%" height="100%" viewBox="0 0 100 100">
-            <Accessory id={equipped.accessory} />
+        {equipped.accessory === 'acc_cape' ? (
+          <Svg style={StyleSheet.absoluteFill} width={imgW} height={imgH} viewBox={`0 0 ${pts.w} ${pts.h}`}>
+            <BackAccessory id={equipped.accessory} pose={poseName} />
           </Svg>
-        </View>
-      ) : null}
+        ) : null}
+        <PoseArtView key={poseName} pose={poseName} width={imgW} height={imgH} animate={animated} tint={BODY_TINT[equipped.color] ?? null} />
+        {equipped.accessory ? (
+          <Svg style={StyleSheet.absoluteFill} width={imgW} height={imgH} viewBox={`0 0 ${pts.w} ${pts.h}`}>
+            <FrontAccessory id={equipped.accessory} pose={poseName} />
+          </Svg>
+        ) : null}
+      </View>
 
       {equipped.hat ? (
         <View style={[styles.layer, { left: headCx - hatW / 2, top: headTop - hatW * 0.78, width: hatW, height: hatW }]}>

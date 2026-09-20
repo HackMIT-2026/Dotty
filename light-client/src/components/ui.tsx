@@ -2,6 +2,8 @@ import type { ReactNode } from 'react';
 import {
   ActivityIndicator,
   Pressable,
+  Image,
+  type ImageSourcePropType,
   RefreshControl,
   ScrollView,
   StyleSheet,
@@ -140,11 +142,11 @@ export function Button({ title, onPress, variant = 'primary', size = 'md', disab
   );
 }
 
-export function Chip({ label, selected, onPress, icon }: { label: string; selected?: boolean; onPress: () => void; icon?: IconName }) {
+export function Chip({ label, selected, onPress, icon, image }: { label: string; selected?: boolean; onPress: () => void; icon?: IconName; image?: ImageSourcePropType }) {
   const fg = selected ? '#fff' : C.ink;
   return (
     <Pressable onPress={onPress} style={({ pressed }) => [styles.chip, selected && styles.chipOn, pressed && { opacity: 0.8 }]}>
-      {icon ? <Icon name={icon} size={17} color={selected ? '#fff' : C.primary} /> : null}
+      {image ? <Image source={image} style={{ width: 26, height: 26 }} resizeMode="contain" /> : icon ? <Icon name={icon} size={17} color={selected ? '#fff' : C.primary} /> : null}
       <Text style={[t.small, { color: fg, fontSize: 14 }]}>{label}</Text>
     </Pressable>
   );

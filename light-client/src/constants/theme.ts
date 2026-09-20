@@ -25,6 +25,13 @@ export const C = {
   sun: '#F5C26B', // sunny amber: gentle attention, with a clock icon
   sunInk: '#96651B',
   sunSoft: '#FDF3E3',
+  // one colour per kid tab (Care, Quests, Shop); the tab bar takes a lighter shade of the page it sits under
+  pageCare: '#F7B955',
+  barCare: '#F9CC80',
+  pageQuests: '#84D6CB',
+  barQuests: '#9DE0D7',
+  pageShop: '#7CC8F0',
+  barShop: '#98D5F5',
   sand: '#F3DFB4', // the sand in the kid's pond scene: the child tab bar
   glass: 'rgba(255, 255, 255, 0.82)', // frosted white panels over the scene
   glassLine: 'rgba(255, 255, 255, 0.9)',
@@ -34,6 +41,7 @@ export const C = {
   mintEdge: '#7DC2A3',
   lavenderEdge: '#9C8BD6',
   sandEdge: '#DEC48E',
+  skyEdge: '#7DBAD9', // the underline of Dotty's speech bubble
   pink: '#E56B8A',
   pinkSoft: '#FBE7EC',
   // status colors are only used in the parent and clinician views: the child UI never shows red

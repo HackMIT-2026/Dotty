@@ -4,7 +4,7 @@ from .. import db
 
 # (id, slot, name, price, rarity, unlock_badge)
 CATALOG = [
-    ("color_sky", "color", "Sky Blue", 0, "common", None),
+    ("color_sky", "color", "Pip Pink", 0, "common", None),
     ("color_mint", "color", "Mint", 60, "common", None),
     ("color_sunset", "color", "Sunset", 80, "common", None),
     ("color_grape", "color", "Grape", 80, "common", None),

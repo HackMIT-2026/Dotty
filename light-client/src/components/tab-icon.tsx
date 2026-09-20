@@ -22,12 +22,21 @@ export const tabScreenOptions = (active: string) => ({
   tabBarStyle: { height: 64, paddingTop: 6 },
 });
 
-/** The kid's tab bar: sand coloured like the pond floor, with the current tab in a soft white pill. */
+/** The kid's tab bar in a given colour, with a soft white edge on top. Each kid tab picks its own colour. */
+export const childBar = (backgroundColor: string) => ({
+  height: 78,
+  paddingHorizontal: 6,
+  backgroundColor,
+  borderTopWidth: BORDER,
+  borderTopColor: C.glassLine,
+});
+
+/** The kid's tab bar: sand coloured like the pond floor on Dotty's home, with the current tab in a soft white pill. */
 export const childTabScreenOptions = (active: string) => ({
   ...tabScreenOptions(active),
   tabBarInactiveTintColor: C.ink,
   tabBarActiveTintColor: C.ink,
   tabBarActiveBackgroundColor: 'rgba(255, 255, 255, 0.6)',
   tabBarItemStyle: { borderRadius: R.lg, marginHorizontal: 4, marginVertical: 6 },
-  tabBarStyle: { height: 78, paddingHorizontal: 6, backgroundColor: C.sand, borderTopWidth: BORDER, borderTopColor: C.glassLine },
+  tabBarStyle: childBar(C.sand),
 });
