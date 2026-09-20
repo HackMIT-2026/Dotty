@@ -1,6 +1,6 @@
-import { Stethoscope } from 'lucide-react';
 import { useState } from 'react';
 
+import clinician from '../assets/clinician.png';
 import { Button, Card, ErrorText, Field } from '../components/ui';
 import { apiBase, errorText } from '../lib/api';
 import { useSession } from '../lib/session';
@@ -32,9 +32,7 @@ export default function Login() {
   return (
     <main className="mx-auto flex min-h-screen max-w-md flex-col justify-center gap-5 p-6">
       <div className="flex flex-col items-center gap-2 text-center">
-        <div className="flex size-14 items-center justify-center rounded-[--radius-clinician] bg-brand text-ink">
-          <Stethoscope size={28} />
-        </div>
+        <img src={clinician} alt="Dotty the doctor" width={160} className="h-auto w-40 select-none" draggable={false} />
         <h1 className="text-3xl font-black">Dotty clinician portal</h1>
         <p className="text-sm text-ink-soft">Set each child's care plan and follow how the week is going.</p>
       </div>
