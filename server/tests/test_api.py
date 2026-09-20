@@ -115,18 +115,18 @@ def test_parent_logged_events_are_sourced_as_parent(client, family):
 
 
 def test_reward_rules(client, family):
-    r = push(client, family["child"], make_event("meal", {"carbs_g": 40, "items": []}, minutes_ago=5))
+    r = push(client, family["child"], make_event("meal", {"items": [{"id": "pizza"}]}, minutes_ago=90))
     assert r["pet"]["dots"] == 10
-    r = push(client, family["child"], make_event("activity", {"minutes": 45, "intensity": "moderate"}))
+    r = push(client, family["child"], make_event("activity", {"minutes": 45, "intensity": "moderate"}, minutes_ago=60))
     assert r["pet"]["dots"] == 10 + 25  # 10 + 5 per full 15 min (capped at +30)
-    r = push(client, family["child"], make_event("bolus", {}))  # "medicine taken", no dose visible to the child
+    r = push(client, family["child"], make_event("bolus", {}, minutes_ago=30))  # "medicine taken", no dose to the child
     assert r["pet"]["dots"] == 45
-    r = push(client, family["child"], make_event("activity", {"minutes": 240, "intensity": "light"}))
+    r = push(client, family["child"], make_event("activity", {"minutes": 200, "intensity": "light"}))
     assert r["rewards"][0]["dots"] == 10 + 30  # cap
 
 
 def test_readings_earn_dots_only_up_to_the_daily_cap(client, family):
-    events = [make_event("reading", {"bg_mgdl": 100 + i}, minutes_ago=i) for i in range(12)]
+    events = [make_event("reading", {"bg_mgdl": 100 + i}, minutes_ago=5 * i) for i in range(12)]
     r = push(client, family["child"], *events)
     assert r["new_count"] == 12  # all stored...
     assert r["pet"]["dots"] == gamification.MAX_REWARDED_READINGS_PER_DAY * gamification.DOTS_READING  # ...but only 8 pay
@@ -166,7 +166,7 @@ def test_streak_of_three_days_awards_milestone_once(client, family):
             ts = datetime.combine(today - timedelta(days=back), datetime.min.time().replace(hour=h), tzinfo=tz)
             docs.append({"_id": f"h{back}{h}", "client_id": f"hist-{back}-{h}", "patient_id": pid, "type": "reading", "ts": ts, "source": "manual", "data": {"bg_mgdl": 110}, "created_at": ts})
     db.events.insert_many(docs)
-    events = [make_event("reading", {"bg_mgdl": 100 + i}, minutes_ago=i) for i in range(3)]
+    events = [make_event("reading", {"bg_mgdl": 100 + i}, minutes_ago=10 * i) for i in range(3)]
     r = push(client, family["child"], *events)
     assert r["pet"]["streak_days"] == 3
     assert [x["dots"] for x in r["rewards"] if x["kind"] == "streak"] == [30]
