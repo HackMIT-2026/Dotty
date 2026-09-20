@@ -1,12 +1,30 @@
-"""Single entry point for new events (device sync and the simulator): store, reward, alert."""
+"""Single entry point for new events (device sync and the simulator): screen, store, reward, alert."""
 
 from datetime import timedelta, timezone
 
 from .. import db
 from ..util import new_id, now
-from . import alerts, gamification
+from . import alerts, food, gamification, integrity
 
 MAX_FUTURE_SKEW = timedelta(minutes=5)
+
+
+def _meal_data(data: dict, trusted: bool) -> dict:
+    """Carbs are worked out here, from the food cards and words the child sent, and never on the device.
+
+    A parent (or an older log that already carries grams) keeps the number they entered.
+    """
+    if trusted and data.get("carbs_g") is not None:
+        return {**data, "carbs_source": data.get("carbs_source", "parent")}
+    items = data.get("items") or []
+    resolved = food.resolve_items(items)
+    return {
+        **{k: v for k, v in data.items() if k != "carbs_g"},
+        "carbs_g": resolved["carbs_g"],
+        "items": resolved["items"],
+        "carbs_source": resolved["carbs_source"],
+        "needs_parent": resolved["needs_parent"] or bool(data.get("help")),
+    }
 
 
 def ingest(patient_id: str, raw_events: list[dict], actor_role: str | None = None) -> dict:
@@ -18,7 +36,10 @@ def ingest(patient_id: str, raw_events: list[dict], actor_role: str | None = Non
     at = now()
     accepted: list[str] = []
     new_events: list[dict] = []
+    fam = db.families.find_one({"child_id": patient_id}) or {}
+    trusted = actor_role != "child"  # the simulator and the parent's own logs are taken at face value
 
+    pending: list[dict] = []
     for e in raw_events:
         # actor_role None = trusted internal caller (simulator). Devices can't claim to be the simulator,
         # and anything a parent logs is sourced as the parent.
@@ -31,29 +52,45 @@ def ingest(patient_id: str, raw_events: list[dict], actor_role: str | None = Non
         ts = e["ts"] if e["ts"].tzinfo else e["ts"].replace(tzinfo=timezone.utc)
         ts = ts.astimezone(timezone.utc)
         ts = min(ts, at)  # clamp clock skew so the future can't be farmed
-        doc = {
-            "_id": new_id(),
-            "client_id": e["client_id"],
-            "patient_id": patient_id,
-            "type": e["type"],
-            "ts": ts,
-            "source": source,
-            "data": e.get("data", {}),
-            "created_at": at,
-        }
+        data = e.get("data", {})
+        if e["type"] == "meal":
+            data = _meal_data(data, trusted)
+        pending.append(
+            {
+                "_id": new_id(),
+                "client_id": e["client_id"],
+                "patient_id": patient_id,
+                "type": e["type"],
+                "ts": ts,
+                "source": source,
+                "data": data,
+                "created_at": at,
+            }
+        )
+
+    if not trusted:
+        integrity.screen(patient_id, pending, fam.get("tz"), at)
+
+    for doc in pending:
         res = db.events.update_one(
-            {"client_id": e["client_id"]},
+            {"client_id": doc["client_id"]},
             {"$setOnInsert": {k: v for k, v in doc.items() if k != "client_id"}},
             upsert=True,
         )
-        accepted.append(e["client_id"])
+        accepted.append(doc["client_id"])
         if res.upserted_id:
             new_events.append(doc)
 
-    fam = db.families.find_one({"child_id": patient_id}) or {}
     for e in new_events:
-        if e["type"] == "reading":
+        # Safety comes before anti-cheat: a spammed low is still reported. Only an exact repeat is skipped,
+        # because the parent was already told about the first one.
+        if e["type"] == "reading" and "duplicate" not in e.get("flags", []):
             alerts.check_reading(patient_id, e["data"]["bg_mgdl"], e["ts"])
+        if e["type"] == "meal" and e["data"].get("needs_parent") and not e.get("suspect"):
+            alerts.food_help(patient_id, e)
+    note = integrity.summarise(new_events)
+    if note:
+        alerts.flagged_logs(patient_id, note, at)
 
     pet, rewards = gamification.get_pet(patient_id), []
     if any(e["source"] != "simulator" for e in new_events):

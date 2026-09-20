@@ -15,7 +15,7 @@ const TABS = [
   { to: 'care-plan', label: 'Care plan', icon: ClipboardList },
   { to: 'treatment-plan', label: 'Treatment plan', icon: SlidersHorizontal },
   { to: 'notes', label: 'Notes', icon: MessageSquare },
-  { to: 'alerts', label: 'Alerts', icon: Bell },
+  { to: 'alerts', label: 'Messages and alerts', icon: Bell },
 ];
 
 export default function PatientLayout() {

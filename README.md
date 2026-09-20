@@ -113,6 +113,38 @@ A parent can set or reset their child's PIN under Settings.
 
 On a phone with Expo Go, the app talks to the laptop's Wi-Fi address on port 8000 automatically (phone and laptop must be on the same network). To use another server, set it under "Server settings" on the login screen or in Settings.
 
+### Who sees the carbs
+
+The child's app never receives a number of grams. Food is picked as cards or typed in words ("mac and cheese");
+the server turns that into carbs (Claude, falling back to its own food table) and sends the number only to the
+parent and the clinician. When the estimate isn't confident — or the child taps **Ask a parent** — the meal
+lands in the parent's inbox with a box to set the real number, and the doctor's logbook says where each carb
+count came from. Set `ANTHROPIC_API_KEY` in `server/.env` to use Claude — the model is `claude-haiku-4-5`,
+about $0.0005 an estimate and cached per phrase, and `DOTTY_FOOD_MODEL` switches it (`claude-opus-5` judges
+awkward dishes better). Without a key the food table answers and anything it doesn't recognise goes to the parent.
+
+### Logs that can't be farmed
+
+Dots are paid by the server, never by the phone. A child who taps the same button ten times gets one reward.
+Logs are marked (and then earn nothing, complete no quest, and stay out of the parent's totals and the doctor's
+charts) when they repeat, come seconds apart, arrive all at once, or go past a sensible number for one day. Two
+things together is ordinary — a check-up and a meal — and so is dinner as a check-up, the meal and the medicine
+a couple of minutes apart; tapping through every button in one go is not. Nothing is deleted: `GET
+/patients/{id}/events?flagged=true` shows the marked ones, the parent gets a note so a genuine double-tap can
+be sorted out, and the child's app says "Dotty just had a check-up" instead of offering a dead button.
+
+The care team has the last word: every row of the clinician logbook has **Set aside**, for a log they don't
+believe (a mistyped meter reading, a meal logged twice). It leaves every chart, total and care-plan task and
+stays in the log, labelled with who set it aside — and **Put back** returns it, which also overrules the spam
+check when a child really did check twice in a minute. Dots already earned are never taken back.
+
+### Insulin
+
+Rapid and long-acting are different medicines, so they are never summed into one "insulin" number. The
+clinician's Insulin panel stacks them per day over two weeks — long-acting as the base, rapid on top — with the
+average daily dose, the long-acting share of it (typically 40–50 %) and how many rapid doses a day. The parent's
+app logs both, and both have their own mark on the glucose charts.
+
 ### Demo tricks
 
 - **Offline:** Settings → Offline mode (or airplane mode on a phone). Logs wait in the outbox and upload when you're back online.

@@ -115,7 +115,7 @@ def task_status(task: dict, day_events: list[dict], day: date, tz, at: datetime)
 
 def events_between(patient_id: str, start: datetime, end: datetime) -> list[dict]:
     return list(
-        db.events.find({"patient_id": patient_id, "source": {"$ne": "simulator"}, "ts": {"$gte": start, "$lt": end}}).sort("ts", 1)
+        db.events.find({"patient_id": patient_id, **db.TRUSTED, "ts": {"$gte": start, "$lt": end}}).sort("ts", 1)
     )
 
 

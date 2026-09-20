@@ -161,6 +161,50 @@ def _daily_summary(patient_id: str, summary: list[dict], day, tz, local) -> None
         )
 
 
+def flagged_logs(patient_id: str, summary: str, at) -> None:
+    """Tell the parent when a child's app sent logs that didn't count, so a real mistake can be sorted out."""
+    _, parents, _ = recipients(patient_id)
+    name = _name(patient_id)
+    bucket = int(at.timestamp() // 3600)  # at most one of these an hour
+    for uid in parents:
+        notify(
+            uid,
+            "data_check",
+            f"Some of {name}'s entries need a look",
+            f"{summary} Check with {name}, and log it yourself if it really happened.",
+            {"patient_id": patient_id},
+            dedupe=f"flagged:{patient_id}:{bucket}:{uid}",
+        )
+
+
+def food_help(patient_id: str, event: dict) -> None:
+    """A meal nobody could count (or one the child asked for help with): the parent sets the carbs."""
+    _, parents, _ = recipients(patient_id)
+    name = _name(patient_id)
+    items = ", ".join(f"{i['n']}x {i['label']}" if i.get("n", 1) > 1 else i["label"] for i in event["data"].get("items", []))
+    asked = event["data"].get("help")
+    for uid in parents:
+        notify(
+            uid,
+            "food_help",
+            f"{name} needs help counting a meal" if asked else f"Check the carbs for {name}'s meal",
+            f"{items or 'A meal'} — our estimate is {round(event['data'].get('carbs_g', 0))} g. Tap to set the right number.",
+            {
+                "patient_id": patient_id,
+                "event_id": event["_id"],
+                "items": items,
+                "carbs_g": event["data"].get("carbs_g"),
+                "asked": bool(asked),
+            },
+            dedupe=f"food:{event['_id']}:{uid}",
+        )
+
+
+def help_answered(patient_id: str, label: str) -> None:
+    """Back to the child, in child words: no grams, just that a grown-up helped."""
+    notify(patient_id, "help_answered", "A parent helped Dotty!", f"{label} is all sorted. Thanks for asking!", {})
+
+
 def plan_changed(patient_id: str, clinician_name: str, change: str) -> None:
     """Tell parents the doctor changed the care plan (they see the details in the app's Care plan tab)."""
     _, parents, _ = recipients(patient_id)
@@ -170,7 +214,9 @@ def plan_changed(patient_id: str, clinician_name: str, change: str) -> None:
 
 def _check_sustained_high(patient_id: str, at) -> None:
     readings = list(
-        db.events.find({"patient_id": patient_id, "type": "reading", "ts": {"$gte": at - timedelta(hours=2, minutes=30)}}).sort("ts", 1)
+        db.events.find(
+            {"patient_id": patient_id, "type": "reading", **db.CHECKED, "ts": {"$gte": at - timedelta(hours=2, minutes=30)}}
+        ).sort("ts", 1)
     )
     if len(readings) < 2 or any(r["data"]["bg_mgdl"] <= SUSTAINED_HIGH for r in readings):
         return

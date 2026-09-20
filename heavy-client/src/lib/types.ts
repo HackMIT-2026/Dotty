@@ -97,7 +97,7 @@ export interface Note {
 
 export interface AppNotification {
   id: string;
-  kind: 'clinician_note' | 'missed_treatment' | 'out_of_range' | 'reward' | 'high_five' | 'care_summary';
+  kind: 'clinician_note' | 'parent_note' | 'missed_treatment' | 'out_of_range' | 'reward' | 'high_five' | 'care_summary';
   title: string;
   body: string;
   data: Record<string, any>;

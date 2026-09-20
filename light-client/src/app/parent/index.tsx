@@ -11,7 +11,7 @@ import { PageHeader } from '@/components/page-header';
 import { Body, Button, Card, Chip, H2, ProgressBar, Row, Screen, Small } from '@/components/ui';
 import { C, R, S, font } from '@/constants/theme';
 import { api, errorText } from '@/lib/api';
-import { MOOD_MESSAGES, bgOf, eventTitle, lastReading, moodFor, ofType, timeInRange, todaysEvents, trend } from '@/lib/derive';
+import { MOOD_MESSAGES, bgOf, eventTitle, insulinToday, lastReading, moodFor, ofType, timeInRange, todaysEvents, trend } from '@/lib/derive';
 import { DEFAULT_EQUIPPED } from '@/lib/pet';
 import { useStore } from '@/lib/store';
 import { planToday } from '@/lib/tasks';
@@ -75,14 +75,16 @@ export default function ParentHome() {
   const since14 = readings.filter((r) => now - new Date(r.ts).getTime() <= 14 * 86_400_000);
   const tir = timeInRange(since14, low, high);
   const carbs = today.filter((e) => e.type === 'meal').reduce((s, e) => s + (e.data.carbs_g ?? 0), 0);
-  const insulin = today.filter((e) => e.type === 'bolus').reduce((s, e) => s + (e.data.units ?? 0), 0);
+  const insulin = insulinToday(events, now);
   const active = today.filter((e) => e.type === 'activity').reduce((s, e) => s + (e.data.minutes ?? 0), 0);
   const checks = today.filter((e) => e.type === 'reading').length;
   const carePlan = planToday(tasks, events, now);
   const mood = moodFor(last, now, carePlan.items.some((i) => i.status === 'missed'));
   const latestNote = notifications.find((n) => n.kind === 'clinician_note');
   const recent = [...events].reverse().filter((e) => e.type !== 'pet').slice(0, 8);
-  const markers = events.filter((e) => e.type === 'meal' || e.type === 'activity' || (e.type === 'bolus' && e.data.units != null));
+  const markers = events.filter(
+    (e) => e.type === 'meal' || e.type === 'activity' || ((e.type === 'bolus' || e.type === 'basal') && e.data.units != null),
+  );
 
   if (!family?.child) {
     return (
@@ -179,7 +181,7 @@ export default function ParentHome() {
         <Stat label="In range" value={tir == null ? '–' : `${tir}%`} sub="14 days" />
         <Stat label="Check-ups" value={String(checks)} sub="today" />
         <Stat label="Carbs" value={`${carbs} g`} sub="today" />
-        <Stat label="Insulin" value={`${Math.round(insulin * 10) / 10} u`} sub="today" />
+        <Stat label="Insulin" value={`${insulin.tdd} u`} sub={`${insulin.rapid} rapid · ${insulin.basal} long-acting`} />
         <Stat label="Active" value={`${active} min`} sub="today" />
       </View>
 

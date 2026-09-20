@@ -8,12 +8,14 @@ import { parseBg, rangeHint, useGlucoseUnit } from '@/lib/units';
 import { Button, Chip, Field, Row, Small } from './ui';
 import { ParentIcon, type ParentIconName } from './parent-icon';
 
-type Kind = 'reading' | 'meal' | 'bolus' | 'activity';
+type Kind = 'reading' | 'meal' | 'bolus' | 'basal' | 'activity';
 
+// Rapid and long-acting are different medicines, so they are logged (and totalled) apart.
 const KINDS: { id: Kind; label: string; sticker: ParentIconName; field: string; min: number; max: number }[] = [
   { id: 'reading', label: 'Glucose', sticker: 'glucose' as ParentIconName, field: 'mg/dL', min: 20, max: 600 },
   { id: 'meal', label: 'Carbs', sticker: 'meal' as ParentIconName, field: 'grams of carbs', min: 1, max: 300 },
-  { id: 'bolus', label: 'Insulin', sticker: 'medicine' as ParentIconName, field: 'units', min: 0.5, max: 100 },
+  { id: 'bolus', label: 'Rapid', sticker: 'medicine' as ParentIconName, field: 'units of rapid insulin', min: 0.5, max: 100 },
+  { id: 'basal', label: 'Long-acting', sticker: 'medicine' as ParentIconName, field: 'units of long-acting insulin', min: 0.5, max: 100 },
   { id: 'activity', label: 'Activity', sticker: 'activity' as ParentIconName, field: 'minutes', min: 1, max: 300 },
 ];
 
@@ -39,7 +41,9 @@ export function QuickLog() {
           ? { carbs_g: Math.round(n), items: [] }
           : kind === 'bolus'
             ? { units: n, reason: 'manual' }
-            : { kind: 'activity', minutes: Math.round(n), intensity: 'moderate' };
+            : kind === 'basal'
+              ? { units: n }
+              : { kind: 'activity', minutes: Math.round(n), intensity: 'moderate' };
     await saveLog(kind, data);
     if (useStore.getState().online) pushToast({ kind: 'info', text: 'Logged', sub: `${k.label}: ${value} ${field}` });
     setValue('');

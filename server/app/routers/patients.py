@@ -17,7 +17,9 @@ SUMMARY_DAYS = 14
 def _summary(pid: str) -> dict:
     child = db.users.find_one({"_id": pid}, {"name": 1})
     since = now() - timedelta(days=SUMMARY_DAYS)
-    readings = list(db.events.find({"patient_id": pid, "type": "reading", "ts": {"$gte": since}}, {"ts": 1, "data": 1}).sort("ts", 1))
+    readings = list(
+        db.events.find({"patient_id": pid, "type": "reading", **db.CHECKED, "ts": {"$gte": since}}, {"ts": 1, "data": 1}).sort("ts", 1)
+    )
     values = [r["data"]["bg_mgdl"] for r in readings]
     plan = db.plans.find_one({"patient_id": pid})
     low, high = (plan["target"]["low"], plan["target"]["high"]) if plan else (70, 180)
@@ -53,15 +55,53 @@ def patient_events(
     from_: datetime | None = Query(None, alias="from"),
     to: datetime | None = None,
     type: str | None = None,
+    flagged: bool = False,
     user: dict = Depends(current_user),
 ):
     check_access(user, patient_id)
-    query: dict = {"patient_id": patient_id}
+    # Flagged logs are left out of the clinical picture by default; `flagged=true` shows them for a look.
+    query: dict = {"patient_id": patient_id} if flagged else {"patient_id": patient_id, **db.CHECKED}
     if from_ or to:
         query["ts"] = {**({"$gte": from_} if from_ else {}), **({"$lte": to} if to else {})}
     if type:
         query["type"] = type
     return [pub(e) for e in db.events.find(query).sort("ts", 1).limit(5000)]
+
+
+@router.post("/patients/{patient_id}/events/{event_id}/discard")
+def discard_event(patient_id: str, event_id: str, user: dict = Depends(require_role("clinician", "parent"))):
+    """Set aside a log the care team doesn't believe — a mistyped meter reading, a meal logged twice.
+
+    Nothing is erased: the event keeps its place in the log with who set it aside and when, and it can be put
+    back. It is marked the same way spammed logs are (services/integrity.py), so from here on it stays out of
+    every chart, total and care-plan task. Dots already paid for it are left alone — those are the child's.
+    """
+    check_access(user, patient_id)
+    event = db.events.find_one({"_id": event_id, "patient_id": patient_id})
+    if not event:
+        raise HTTPException(404, "No such event")
+    db.events.update_one(
+        {"_id": event_id},
+        {
+            "$set": {"suspect": True, "flags": ["discarded"], "discarded_by": user["_id"], "discarded_at": now()},
+            "$unset": {"restored_by": ""},
+        },
+    )
+    return pub(db.events.find_one({"_id": event_id}))
+
+
+@router.post("/patients/{patient_id}/events/{event_id}/restore")
+def restore_event(patient_id: str, event_id: str, user: dict = Depends(require_role("clinician", "parent"))):
+    """Put a log back: the care team's judgement also overrules the spam check."""
+    check_access(user, patient_id)
+    event = db.events.find_one({"_id": event_id, "patient_id": patient_id})
+    if not event:
+        raise HTTPException(404, "No such event")
+    db.events.update_one(
+        {"_id": event_id},
+        {"$set": {"restored_by": user["_id"]}, "$unset": {"suspect": "", "flags": "", "discarded_by": "", "discarded_at": ""}},
+    )
+    return pub(db.events.find_one({"_id": event_id}))
 
 
 @router.get("/patients/{patient_id}/plan")
