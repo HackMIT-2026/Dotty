@@ -6,6 +6,8 @@ import { Icon, IconTile, type IconName } from '@/components/icon';
 import { PageHeader } from '@/components/page-header';
 import { Body, Button, Card, Chip, H2, Row, Screen, Small } from '@/components/ui';
 import { C, R, S, font } from '@/constants/theme';
+import { FoodIcon } from '@/components/food-icon';
+import { PlayIcon } from '@/components/play-icon';
 import { ACTIVITIES, FOODS } from '@/data/foods';
 import { saveLog } from '@/lib/log-action';
 import { CARE_ACTIONS } from '@/lib/pet';
@@ -101,7 +103,7 @@ function Eat() {
               onPress={() => setCounts((s) => ({ ...s, [f.id]: c + 1 }))}
               onLongPress={() => setCounts((s) => ({ ...s, [f.id]: Math.max(0, c - 1) }))}
               style={({ pressed }) => [styles.food, c > 0 && styles.foodOn, pressed && { transform: [{ scale: 0.95 }] }]}>
-              <IconTile name={f.icon} color={f.color} tint={c > 0 ? '#fff' : `${f.color}1F`} size={46} radius={R.sm} />
+              <FoodIcon id={f.id} size={54} />
               <Text style={styles.foodName} numberOfLines={1}>
                 {f.name}
               </Text>
@@ -152,19 +154,19 @@ function Play() {
       <H2>What did you play?</H2>
       <Row style={{ flexWrap: 'wrap' }}>
         {ACTIVITIES.map((a) => (
-          <Chip key={a.id} label={a.name} icon={a.icon} selected={kind === a.id} onPress={() => setKind(a.id)} />
+          <Chip key={a.id} label={a.name} icon={a.icon} art={<PlayIcon id={a.id} />} selected={kind === a.id} onPress={() => setKind(a.id)} />
         ))}
       </Row>
       <Small>For how long?</Small>
       <Row style={{ flexWrap: 'wrap' }}>
         {[15, 30, 45, 60, 90].map((m) => (
-          <Chip key={m} label={`${m} min`} icon="timer-outline" selected={minutes === m} onPress={() => setMinutes(m)} />
+          <Chip key={m} label={`${m} min`} icon="timer-outline" art={<PlayIcon id={`min-${m}`} />} selected={minutes === m} onPress={() => setMinutes(m)} />
         ))}
       </Row>
       <Small>How hard?</Small>
       <Row style={{ flexWrap: 'wrap' }}>
         {INTENSITY.map((i) => (
-          <Chip key={i.id} label={i.label} icon={i.icon} selected={intensity === i.id} onPress={() => setIntensity(i.id)} />
+          <Chip key={i.id} label={i.label} icon={i.icon} art={<PlayIcon id={i.id} />} selected={intensity === i.id} onPress={() => setIntensity(i.id)} />
         ))}
       </Row>
       <Button title="Play with Dotty" icon="party-popper" size="lg" onPress={save} loading={busy} />

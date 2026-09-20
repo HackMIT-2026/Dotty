@@ -12,7 +12,7 @@ export const C = {
   ink: '#2B2A33',
   inkSoft: '#6B6875',
   line: '#EADFD3', // card borders
-  primary: '#F28B82', // coral: main buttons, Pip's body
+  primary: '#F28B82', // coral: main buttons, Dotty's body
   primaryDark: '#E56B8A', // gill rose: pressed states and headings on soft fills
   primarySoft: '#FDEDEB',
   lavender: '#B8A9E8', // accent, soft buttons, banners

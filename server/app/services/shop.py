@@ -4,7 +4,7 @@ from .. import db
 
 # (id, slot, name, price, rarity, unlock_badge)
 CATALOG = [
-    ("color_sky", "color", "Pip Pink", 0, "common", None),
+    ("color_sky", "color", "Dotty Pink", 0, "common", None),
     ("color_mint", "color", "Mint", 60, "common", None),
     ("color_sunset", "color", "Sunset", 80, "common", None),
     ("color_grape", "color", "Grape", 80, "common", None),
@@ -19,7 +19,7 @@ CATALOG = [
     ("acc_scarf", "accessory", "Scarf", 70, "common", None),
     ("acc_headphones", "accessory", "Headphones", 120, "rare", None),
     ("acc_cape", "accessory", "Hero Cape", 180, "epic", "sport_star"),
-    ("bg_underwater", "background", "Pip's Pond", 0, "common", None),
+    ("bg_underwater", "background", "Dotty's Pond", 0, "common", None),
     ("bg_day", "background", "Sunny Day", 0, "common", None),
     ("bg_night", "background", "Starry Night", 80, "common", None),
     ("bg_beach", "background", "Beach", 100, "rare", None),

@@ -252,17 +252,19 @@ export default function CarePlan() {
   return (
     <div className="flex flex-col gap-5">
       <Card>
-        <div className="flex items-center justify-between">
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <div>
             <H2>Daily care plan</H2>
             <p className="text-sm text-ink-soft">
               Each task becomes a quest in {patient.name}'s app and a checklist item for the parent. Priority decides how much the
-              quest is worth and how strongly Pip reacts.
+              quest is worth and how strongly Dotty reacts.
             </p>
           </div>
-          <Button icon={<Plus size={16} />} onClick={() => { setDraft(EMPTY); setEditing('new'); }}>
-            Add task
-          </Button>
+          <div className="shrink-0 self-start whitespace-nowrap">
+            <Button icon={<Plus size={16} />} onClick={() => { setDraft(EMPTY); setEditing('new'); }}>
+              Add task
+            </Button>
+          </div>
         </div>
       </Card>
 
@@ -322,13 +324,15 @@ export default function CarePlan() {
             </Pill>
           </div>
           <div className="mt-3 overflow-x-auto">
-            <table className="w-full border-separate border-spacing-1 text-sm">
+            <table className="w-full table-fixed border-separate border-spacing-px text-sm sm:border-spacing-1">
               <thead>
                 <tr>
-                  <th />
+                  <th className="w-24 sm:w-44" />
                   {grid.days.map((d) => (
-                    <th key={d} className="text-[10px] font-bold text-ink-soft">
-                      {shortDay(d)}
+                    <th key={d} className="text-[9px] font-bold text-ink-soft sm:text-[10px]">
+                      {/* on a phone only the day of the month fits, e.g. "12" */}
+                      <span className="sm:hidden">{shortDay(d).slice(1)}</span>
+                      <span className="hidden sm:inline">{shortDay(d)}</span>
                     </th>
                   ))}
                 </tr>
@@ -336,11 +340,11 @@ export default function CarePlan() {
               <tbody>
                 {grid.rows.map((row) => (
                   <tr key={row.task.id}>
-                    <td className="max-w-44 truncate pr-2 text-xs font-bold">{row.task.title}</td>
+                    <td className="truncate pr-2 text-xs font-bold">{row.task.title}</td>
                     {row.cells.map((cell, i) => (
                       <td key={i}>
                         <div
-                          className={`flex size-6 items-center justify-center rounded-md ${cell ? CELL[cell].className : 'bg-line/50 text-line'}`}
+                          className={`mx-auto flex size-3.5 items-center justify-center overflow-hidden rounded-sm sm:size-6 sm:rounded-md [&_svg]:size-2.5 sm:[&_svg]:size-3.5 ${cell ? CELL[cell].className : 'bg-line/50 text-line'}`}
                           title={`${row.task.title} · ${grid.days[i]} · ${cell ?? 'not scheduled'}`}>
                           {cell ? CELL[cell].icon : ''}
                         </div>

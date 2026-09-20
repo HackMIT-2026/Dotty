@@ -1,6 +1,6 @@
 import { Link } from 'expo-router';
 import { useEffect, useState } from 'react';
-import { Pressable, StyleSheet, View } from 'react-native';
+import { Image, Pressable, StyleSheet, View } from 'react-native';
 
 import { Dotty } from '@/components/pet/dotty';
 import { PetScene } from '@/components/pet/scene';
@@ -74,8 +74,8 @@ export default function Login() {
       </View>
 
       <Row style={{ justifyContent: 'center' }}>
-        <Chip label="I'm a kid" icon="human-child" selected={mode === 'kid'} onPress={() => { setMode('kid'); setError(null); }} />
-        <Chip label="Grown-up" icon="account-heart" selected={mode === 'grownup'} onPress={() => { setMode('grownup'); setError(null); }} />
+        <Chip label="I'm a kid" icon="human-child" art={<Image source={require('@/assets/icons/baby.png')} style={styles.roleIcon} resizeMode="contain" />} selected={mode === 'kid'} onPress={() => { setMode('kid'); setError(null); }} />
+        <Chip label="I'm the parent" icon="account-heart" art={<Image source={require('@/assets/icons/old.png')} style={styles.roleIcon} resizeMode="contain" />} selected={mode === 'grownup'} onPress={() => { setMode('grownup'); setError(null); }} />
       </Row>
 
       {mode === 'kid' ? (
@@ -121,7 +121,7 @@ export default function Login() {
         <Row style={{ flexWrap: 'wrap' }}>
           <Button
             title="Maya (kid)"
-            icon="human-child"
+            leading={<Image source={require('@/assets/icons/baby.png')} style={styles.demoIcon} resizeMode="contain" />}
             variant="sun"
             loading={busy === 'maya'}
             onPress={() => {
@@ -133,7 +133,7 @@ export default function Login() {
           />
           <Button
             title="Alex (parent)"
-            icon="account-heart"
+            leading={<Image source={require('@/assets/icons/old.png')} style={styles.demoIcon} resizeMode="contain" />}
             variant="sun"
             loading={busy === 'alex'}
             onPress={() => {
@@ -160,5 +160,7 @@ export default function Login() {
 }
 
 const styles = StyleSheet.create({
+  roleIcon: { width: 34, height: 34 },
+  demoIcon: { width: 38, height: 38 },
   hero: { height: 190, borderRadius: R.lg, overflow: 'hidden' },
 });

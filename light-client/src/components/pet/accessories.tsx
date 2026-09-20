@@ -1,6 +1,6 @@
 /**
  * The shop's "extras" (glasses, headphones, bow tie, scarf, cape), drawn in each pose picture's own pixel space so
- * they land on the right spot however Pip is sitting: glasses on the eyes, headphones on the ears, and so on.
+ * they land on the right spot however Dotty is sitting: glasses on the eyes, headphones on the ears, and so on.
  * The points below were measured from the pictures in assets/pet (see pose-art.ts for where those come from).
  */
 import { G, Path, Circle, Polygon, Rect } from 'react-native-svg';

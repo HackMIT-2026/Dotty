@@ -1,6 +1,6 @@
 import { Image } from 'expo-image';
 import type { ReactNode } from 'react';
-import { StyleSheet, View, type StyleProp, type ViewStyle } from 'react-native';
+import { StyleSheet, View, type ImageSourcePropType, type StyleProp, type ViewStyle } from 'react-native';
 import Svg, { Circle, Ellipse, G, Path, Rect } from 'react-native-svg';
 
 /** Background scenes for the `background` shop slot. Drawn in a 400x300 box, cropped to fill. */
@@ -79,20 +79,37 @@ function Backdrop({ id }: { id: string }) {
   }
 }
 
-/** Pip's pond: the painted background from the design branch. */
-const UNDERWATER = require('@/assets/background/underwater_wide.png');
-const UNDERWATER_TALL = require('@/assets/background/underwater.png');
+/** Dotty's pond, and the four other places in the shop, as painted portrait scenes (941x1672). */
+const SCENES: Record<string, { source: ImageSourcePropType; focus: string }> = {
+  bg_underwater: { source: require('@/assets/background/underwater.png'), focus: '78%' },
+  bg_day: { source: require('@/assets/background/sunny-day.webp'), focus: '66%' },
+  bg_night: { source: require('@/assets/background/starry-night.webp'), focus: '70%' },
+  bg_beach: { source: require('@/assets/background/beach.webp'), focus: '52%' },
+  bg_space: { source: require('@/assets/background/outer-space.webp'), focus: '74%' },
+  bg_candy: { source: require('@/assets/background/candy-land.webp'), focus: '64%' },
+};
+/** Wide version of the pond for the wide boxes (login banner, shop preview). */
+const UNDERWATER_WIDE = require('@/assets/background/underwater_wide.png');
 
-/** The portrait pond, filling the whole screen behind the child's home (sand along the bottom). */
-export function PondBackdrop() {
-  return <Image source={UNDERWATER_TALL} style={StyleSheet.absoluteFill} contentFit="cover" contentPosition="bottom" />;
+/**
+ * The place Dotty is in, filling the whole screen behind the child's home (the ground runs along the bottom).
+ * `background` is the id of the place the child bought and picked in the shop.
+ */
+export function SceneBackdrop({ background }: { background: string }) {
+  const scene = SCENES[background] ?? SCENES.bg_underwater;
+  return <Image source={scene.source} style={StyleSheet.absoluteFill} contentFit="cover" contentPosition="bottom" transition={200} />;
 }
 
+/** A box showing a place, for the shop preview, the shop's little cards and the login banner. */
 export function PetScene({ background, children, style }: { background: string; children?: ReactNode; style?: StyleProp<ViewStyle> }) {
+  const scene = SCENES[background];
   return (
     <View style={[styles.scene, style]}>
       {background === 'bg_underwater' ? (
-        <Image source={UNDERWATER} style={StyleSheet.absoluteFill} contentFit="cover" transition={200} />
+        <Image source={UNDERWATER_WIDE} style={StyleSheet.absoluteFill} contentFit="cover" transition={200} />
+      ) : scene ? (
+        // the boxes are wide and the pictures are tall, so show the band around the ground where Dotty stands
+        <Image source={scene.source} style={StyleSheet.absoluteFill} contentFit="cover" contentPosition={{ left: '50%', top: scene.focus }} transition={200} />
       ) : (
         <Svg style={StyleSheet.absoluteFill} viewBox="0 0 400 300" preserveAspectRatio="xMidYMid slice">
           <Backdrop id={background} />

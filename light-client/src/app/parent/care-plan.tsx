@@ -97,12 +97,12 @@ export default function ParentCarePlan() {
 
       <Card>
         <H2>Last 7 days</H2>
-        <Row style={{ justifyContent: 'space-between', marginTop: S.sm }}>
+        <Row style={{ marginTop: S.sm, gap: 4 }}>
           {history.map((d) => {
             const full = d.total > 0 && d.done === d.total;
             const none = d.done === 0;
             return (
-              <View key={d.date} style={{ alignItems: 'center', gap: 4 }}>
+              <View key={d.date} style={{ flex: 1, alignItems: 'center', gap: 4 }}>
                 <View
                   style={[
                     styles.day,
@@ -134,6 +134,7 @@ export default function ParentCarePlan() {
 const styles = StyleSheet.create({
   badge: { borderRadius: R.pill, paddingHorizontal: 10, paddingVertical: 3 },
   badgeText: { ...font('800'), fontSize: 12 },
-  day: { width: 40, height: 40, borderRadius: R.md, alignItems: 'center', justifyContent: 'center' },
+  // seven of these share the card's width, so they shrink on small phones instead of running off the edge
+  day: { width: '100%', maxWidth: 40, aspectRatio: 1, borderRadius: R.md, alignItems: 'center', justifyContent: 'center' },
   dayText: { ...font('800'), fontSize: 13 },
 });
