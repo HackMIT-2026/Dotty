@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { StyleSheet, Text, View } from 'react-native';
+import { Image, StyleSheet, Text, View } from 'react-native';
 
 import { Icon, IconTile, type IconName } from '@/components/icon';
 import { PageHeader } from '@/components/page-header';
@@ -172,14 +172,13 @@ export default function Quests() {
           const earned = pet?.badges.includes(id);
           return (
             <View key={id} style={[styles.badge, earned ? { borderColor: b.color, backgroundColor: b.tint } : null]}>
-              <View style={{ opacity: earned ? 1 : 0.35 }}>
-                <IconTile
-                  name={earned ? b.icon : 'lock-outline'}
-                  color={earned ? '#fff' : C.inkSoft}
-                  tint={earned ? b.color : C.line}
-                  size={58}
-                  radius={29}
-                />
+              <View style={styles.badgeArt}>
+                <Image source={b.image} style={[styles.badgeImage, !earned && { opacity: 0.3 }]} resizeMode="contain" />
+                {!earned && (
+                  <View style={styles.lock}>
+                    <Icon name="lock-outline" size={18} color={C.inkSoft} />
+                  </View>
+                )}
               </View>
               <Text style={styles.badgeName}>{b.name}</Text>
               <Text style={styles.badgeHow}>{earned ? 'Earned!' : b.how}</Text>
@@ -206,6 +205,9 @@ const styles = StyleSheet.create({
     borderColor: C.line,
     gap: 4,
   },
+  badgeArt: { width: 72, height: 72, alignItems: 'center', justifyContent: 'center' },
+  badgeImage: { width: 72, height: 72 },
+  lock: { position: 'absolute', right: -2, bottom: -2, width: 28, height: 28, borderRadius: 14, backgroundColor: C.card, borderWidth: 2, borderColor: C.line, alignItems: 'center', justifyContent: 'center' },
   badgeName: { ...font('800'), fontSize: 15, color: C.ink, marginTop: 4 },
   badgeHow: { ...font('600'), fontSize: 12, color: C.inkSoft, textAlign: 'center' },
 });

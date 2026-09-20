@@ -81,6 +81,12 @@ function Backdrop({ id }: { id: string }) {
 
 /** Pip's pond: the painted background from the design branch. */
 const UNDERWATER = require('@/assets/background/underwater_wide.png');
+const UNDERWATER_TALL = require('@/assets/background/underwater.png');
+
+/** The portrait pond, filling the whole screen behind the child's home (sand along the bottom). */
+export function PondBackdrop() {
+  return <Image source={UNDERWATER_TALL} style={StyleSheet.absoluteFill} contentFit="cover" contentPosition="bottom" />;
+}
 
 export function PetScene({ background, children, style }: { background: string; children?: ReactNode; style?: StyleProp<ViewStyle> }) {
   return (

@@ -8,19 +8,15 @@ A Tamagotchi-style companion that turns Type 1 diabetes care into looking after 
 | `light-client/` | Family app (child + parent roles) | Expo / React Native |
 | `heavy-client/` | Clinician portal: care plan, charts, notes | React + Vite + Tailwind |
 
-The look comes from the design system on the `gloria` branch (Figma tokens: Fredoka, the cream/coral palette,
-24px cards) and Pip, the pet artwork. `light-client/src/constants/theme.ts` and `heavy-client/src/index.css` hold
-the tokens — never type a hex code outside those two files.
-
 ## Run locally (new computer)
 
 Each computer runs its **own** local MongoDB database. A newly cloned project has no users or data until you run the seed command below, so the demo logins will not work until the API has been seeded.
 
-Prerequisites: Homebrew, Python 3.12+, and Node 22+.
+Prerequisites: Python 3.12+ and Node 22+. macOS also needs Homebrew.
 
 ### 1. Install and start MongoDB (first time only)
 
-On macOS, install MongoDB Community with Homebrew. Newer Homebrew versions require third-party taps to be trusted explicitly:
+**macOS** — install MongoDB Community with Homebrew. Newer Homebrew versions require third-party taps to be trusted explicitly:
 
 ```bash
 brew tap mongodb/brew
@@ -29,23 +25,41 @@ brew install mongodb/brew/mongodb-community@8.0
 brew services start mongodb-community@8.0
 ```
 
-Check that it is running:
+**Windows** — download and run the [MongoDB Community Server MSI installer](https://www.mongodb.com/try/download/community). During setup, keep **Install MongoD as a Service** selected. Then open PowerShell **as Administrator** and start it (it may already be running):
+
+```powershell
+net start MongoDB
+```
+
+On either system, check that it is running (install [MongoDB Shell (`mongosh`)](https://www.mongodb.com/try/download/shell) first if the command is unavailable):
 
 ```bash
 mongosh --eval 'db.runCommand({ ping: 1 })'
 ```
 
-The command should return `ok: 1`. On later runs, MongoDB normally starts with your computer; if it does not, run `brew services start mongodb-community@8.0` again.
+The command should return `ok: 1`. On later runs, MongoDB normally starts with your computer. If it does not, run `brew services start mongodb-community@8.0` on macOS, or `net start MongoDB` in an Administrator PowerShell window on Windows.
 
 ### 2. Start the API and create local demo data
 
 **Terminal 1: API**
+
+**macOS:**
 
 ```bash
 cd server
 python3 -m venv .venv && .venv/bin/pip install -r requirements.txt   # first time only
 .venv/bin/python -m scripts.seed          # first time: creates local "dotty" demo data (wipes it first)
 .venv/bin/uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
+```
+
+**Windows (PowerShell):**
+
+```powershell
+cd server
+py -3.12 -m venv .venv
+.\.venv\Scripts\python.exe -m pip install -r requirements.txt
+.\.venv\Scripts\python.exe -m scripts.seed
+.\.venv\Scripts\python.exe -m uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
 ```
 
 API docs: http://localhost:8000/docs
@@ -55,6 +69,8 @@ API docs: http://localhost:8000/docs
 ### 3. Start the clients
 
 **Terminal 2: clinician portal**
+
+These commands are the same on macOS and Windows:
 
 ```bash
 cd heavy-client
@@ -67,6 +83,8 @@ three things: what you and the parent read (title + instructions), what the chil
 counts (Dots + importance stars, which also drive Dotty's mood).
 
 **Terminal 3: family app**
+
+These commands are the same on macOS and Windows:
 
 ```bash
 cd light-client
