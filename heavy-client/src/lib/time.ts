@@ -17,6 +17,10 @@ export function dayLabel(ts: string | number): string {
   return new Date(ts).toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric' });
 }
 
+export function localDate(ts: string | number): string {
+  return new Date(ts).toDateString();
+}
+
 export function shortDay(iso: string): string {
   const d = new Date(`${iso}T12:00:00`);
   return `${d.toLocaleDateString(undefined, { weekday: 'narrow' })}${d.getDate()}`;

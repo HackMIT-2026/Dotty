@@ -162,9 +162,59 @@ def delete_note(patient_id: str, note_id: str, user: dict = Depends(require_role
 @router.post("/patients/{patient_id}/notes")
 def add_note(patient_id: str, body: NoteIn, user: dict = Depends(require_role("clinician"))):
     check_access(user, patient_id)
-    note = {"_id": new_id(), "patient_id": patient_id, "clinician_id": user["_id"], "text": body.text.strip(), "created_at": now()}
+    note = {
+        "_id": new_id(),
+        "patient_id": patient_id,
+        "clinician_id": user["_id"],
+        "author_id": user["_id"],
+        "author_role": "clinician",
+        "author_name": user["name"],
+        "text": body.text.strip(),
+        "created_at": now(),
+    }
     db.notes.insert_one(note)
     _, parents, _ = recipients(patient_id)
     for uid in parents:
         notify(uid, "clinician_note", f"Note from {user['name']}", note["text"], {"patient_id": patient_id, "note_id": note["_id"]})
+    return pub(note)
+
+
+@router.post("/patients/{patient_id}/notes/from-parent")
+def add_parent_note(patient_id: str, body: NoteIn, user: dict = Depends(require_role("parent"))):
+    check_access(user, patient_id)
+    family = family_of_patient(patient_id)
+    clinician_id = family.get("clinician_id") if family else None
+    if not clinician_id:
+        raise HTTPException(409, "This family does not have a clinician yet")
+    child = db.users.find_one({"_id": patient_id}, {"name": 1})
+    patient_name = child["name"] if child else "Patient"
+    clinician = db.users.find_one({"_id": clinician_id}, {"name": 1})
+    clinician_name = clinician["name"] if clinician else "your doctor"
+    note = {
+        "_id": new_id(),
+        "patient_id": patient_id,
+        "clinician_id": clinician_id,
+        "author_id": user["_id"],
+        "author_role": "parent",
+        "author_name": user["name"],
+        "text": body.text.strip(),
+        "created_at": now(),
+    }
+    db.notes.insert_one(note)
+    notify(
+        clinician_id,
+        "parent_note",
+        f"{user['name']} ({patient_name})",
+        note["text"],
+        {"patient_id": patient_id, "note_id": note["_id"]},
+    )
+    parent_notification_id = notify(
+        user["_id"],
+        "parent_note",
+        f"You sent to {clinician_name}",
+        note["text"],
+        {"patient_id": patient_id, "note_id": note["_id"]},
+    )
+    if parent_notification_id:
+        db.notifications.update_one({"_id": parent_notification_id}, {"$set": {"read_at": now()}})
     return pub(note)

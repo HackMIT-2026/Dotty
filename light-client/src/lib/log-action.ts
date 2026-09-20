@@ -11,6 +11,8 @@ export async function saveLog(type: DotEvent['type'], data: Record<string, any>)
   const event = st.logEvent(type, data);
   await syncNow();
   const after = useStore.getState();
+  // a child finishing something: ribbons pop and the phone buzzes
+  if (after.session?.user.role === 'child') after.burstConfetti();
   if (!after.online && after.session?.user.role === 'child') {
     const dots = previewDots(event);
     after.pushToast({

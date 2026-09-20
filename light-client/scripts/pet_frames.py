@@ -2,7 +2,7 @@
 Builds Dotty's animation pieces from the flat pose artwork in assets/pet/*.png.
 
 For every pose it writes, into assets/pet/anim/<pose>/:
-  tail-0..12.webp   the body (expression marks removed) with the tail bent a little further each frame
+  tail-0..20.webp   the body (expression marks removed) with the tail bent a little further each frame
   mouth.webp       a small patch that draws the mouth open (faded in and out by the app)
   mark-N.webp      each expression mark (hearts, question mark, Zzz, bursts) as its own image
 and it regenerates src/components/pet/pose-art.ts, which tells the app where each piece goes.
@@ -16,6 +16,7 @@ All coordinates below are in pixels of the source PNG in assets/pet/.
 """
 import json
 import math
+import sys
 from pathlib import Path
 
 import cv2
@@ -28,8 +29,8 @@ SRC = ROOT / 'assets' / 'pet'
 OUT = SRC / 'anim'
 TS_OUT = ROOT / 'src' / 'components' / 'pet' / 'pose-art.ts'
 
-PAD = 0.06  # extra room around the tail frames, as a fraction of the picture width
-FRAMES = 13  # tail bends from -amp to +amp in this many steps; the app plays them back and forth
+PAD = 0.10  # extra room around the tail frames, as a fraction of the picture width
+FRAMES = 21  # tail bends from -amp to +amp in this many steps; the app plays them back and forth
 
 PLUM = (58, 22, 78)  # the outline colour in the artwork
 MOUTH_PINK = (233, 98, 146)
@@ -38,25 +39,26 @@ TONGUE = (250, 146, 176)
 POSES = {
     'happy': dict(
         out_width=540,
-        tail=dict(pivot=(390, 320), boxes=[(225, 335, 540, 493), (385, 300, 540, 340)], r0=40, r1=190, amp=7),
+        tail=dict(pivot=(390, 320), boxes=[(385, 300, 540, 493), (225, 432, 385, 493)], r0=40, r1=190, amp=14, feather=26),
+        frames=29,  # a bit more in between, for a smoother swing
         mouth=dict(cover=(272, 209, 34, 20), open=(272, 211, 20, 13, 6)),
         marks=[dict(kind='float', delay=0), dict(kind='float', delay=700)],
     ),
     'curious': dict(
         out_width=566,
-        tail=dict(pivot=(395, 402), boxes=[(402, 250, 566, 484)], r0=40, r1=140, amp=7),
+        tail=dict(pivot=(395, 402), boxes=[(402, 250, 566, 484)], r0=40, r1=140, amp=14),
         mouth=dict(cover=(291, 204, 16, 16), open=(291, 206, 8, 11, 5)),
         marks=[dict(kind='wobble', delay=0)],  # the "?" and its dot are one mark
     ),
     'cheering': dict(
         out_width=660,
-        tail=dict(pivot=(760, 720), boxes=[(740, 560, 1174, 976)], r0=90, r1=300, amp=5),
+        tail=dict(pivot=(760, 720), boxes=[(740, 560, 1174, 976)], r0=90, r1=300, amp=10),
         mouth=dict(stretch=(557, 392, 70, 62, 0.16)),  # already open: it opens wider instead
         marks=[dict(kind='burst', delay=0), dict(kind='burst', delay=250), dict(kind='burst', delay=500), dict(kind='burst', delay=750)],
     ),
     'sleepy': dict(
         out_width=724,
-        tail=dict(pivot=(1050, 920), boxes=[(1160, 540, 1448, 1086), (985, 895, 1448, 1086)], r0=80, r1=450, amp=4),
+        tail=dict(pivot=(1050, 920), boxes=[(1190, 590, 1448, 1086), (985, 895, 1448, 1086)], r0=80, r1=450, amp=11),
         mouth=dict(cover=(542, 776, 68, 38), open=(542, 780, 30, 22, 14)),
         marks=[dict(kind='zzz', delay=0), dict(kind='zzz', delay=450), dict(kind='zzz', delay=900)],
     ),
@@ -115,7 +117,7 @@ def bend_tail(body, tail, angle):
     region = np.zeros((h, w), np.float32)
     for x0, y0, x1, y1 in tail['boxes']:
         region[y0:y1, x0:x1] = 1
-    region = cv2.GaussianBlur(region, (0, 0), sigmaX=max(4, w * 0.012))
+    region = cv2.GaussianBlur(region, (0, 0), sigmaX=tail.get('feather', max(4, w * 0.012)))
 
     dist = np.hypot(xs - px, ys - py)
     weight = region * smoothstep((dist - tail['r0']) / (tail['r1'] - tail['r0']))
@@ -209,15 +211,18 @@ def save(im, path, scale):
 
 def main():
     OUT.mkdir(parents=True, exist_ok=True)
+    only = set(sys.argv[1:])  # optionally rebuild the tail frames of just these poses, e.g. `pet_frames.py sleepy`
     manifest = {}
     for name, cfg in POSES.items():
+        frames_wanted = not only or name in only
         im = load(name)
         W, H = im.size
         scale = cfg['out_width'] / W
         pdir = OUT / name
         pdir.mkdir(exist_ok=True)
-        for old in pdir.glob('*.webp'):
-            old.unlink()
+        if frames_wanted:
+            for old in pdir.glob('*.webp'):
+                old.unlink()
 
         body, comps, lab, raw = split_marks(im, cfg)
         groups = group_marks(name, comps)
@@ -232,10 +237,12 @@ def main():
             for x0, y0, x1, y1 in cfg['tail']['boxes']
         ]
         amp = cfg['tail']['amp']
-        angles = np.linspace(-amp, amp, FRAMES)
+        n_frames = cfg.get('frames', FRAMES)
+        angles = np.linspace(-amp, amp, n_frames)
         body_arr = np.pad(np.array(body), ((pad, pad), (pad, pad), (0, 0)))
-        for i, ang in enumerate(angles):
-            save(bend_tail(body_arr, tail, ang), pdir / f'tail-{i}.webp', scale)
+        if frames_wanted:
+            for i, ang in enumerate(angles):
+                save(bend_tail(body_arr, tail, ang), pdir / f'tail-{i}.webp', scale)
 
         # mouth patch
         if 'stretch' in cfg['mouth']:
@@ -267,7 +274,7 @@ def main():
 
         manifest[name] = dict(
             aspect=W / H,
-            frames=FRAMES,
+            frames=n_frames,
             mouth=dict(box=[px / W, py / H, patch.width / W, patch.height / H]),
             marks=marks,
             pad=[pad / W, pad / H],

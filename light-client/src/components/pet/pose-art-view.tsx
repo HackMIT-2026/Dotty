@@ -32,9 +32,9 @@ const MOUTH_SPEED = 1.5; // how much faster than the first version the mouth mov
 const MOUTH_PAUSE_MS = 1000; // mouth shut between the end of one opening and the start of the next
 const ms = (n: number) => Math.round(n / MOUTH_SPEED);
 
-const KIND_MS: Record<MarkKind, number> = { float: 1100, wobble: 900, burst: 650, zzz: 1500 };
+const KIND_MS: Record<MarkKind, number> = { float: 1300, wobble: 900, burst: 650, zzz: 1500 };
 
-function TailFrame({ index, position, source, pad, width, height }: { index: number; position: SharedValue<number>; source: PoseArt['frames'][number]; pad: [number, number]; width: number; height: number }) {
+function TailFrame({ index, position, source, pad, width, height, tint }: { index: number; position: SharedValue<number>; source: PoseArt['frames'][number]; pad: [number, number]; width: number; height: number; tint: string | null }) {
   // the frame below the current position stays fully visible and the next one fades in over it,
   // so the body never gets see-through in the middle of a fade
   const style = useAnimatedStyle(() => {
@@ -46,6 +46,12 @@ function TailFrame({ index, position, source, pad, width, height }: { index: num
       pointerEvents="none"
       style={[{ position: 'absolute', left: -pad[0] * width, top: -pad[1] * height, width: width * (1 + 2 * pad[0]), height: height * (1 + 2 * pad[1]) }, style]}>
       <Image source={source} style={StyleSheet.absoluteFill} contentFit="fill" />
+      {/* a colour-blended copy on top recolours the body but keeps the outline and shading */}
+      {tint ? (
+        <View style={[StyleSheet.absoluteFill, { mixBlendMode: 'color' }]}>
+          <Image source={source} style={StyleSheet.absoluteFill} contentFit="fill" tintColor={tint} />
+        </View>
+      ) : null}
     </Animated.View>
   );
 }
@@ -84,9 +90,14 @@ function Mark({ mark, width, height, animate }: { mark: PoseArt['marks'][number]
           opacity: interpolate(t.value, [0, 1], [0.6, 1]),
           transform: [{ translateY: interpolate(t.value, [0, 1], [0, -drift]) }, { scale: interpolate(t.value, [0, 1], [0.95, 1.06]) }],
         };
-      default: // float: hearts drift up a touch and swell
+      default: // float: hearts bob up, sway from side to side and swell like a heartbeat
         return {
-          transform: [{ translateY: interpolate(t.value, [0, 1], [0, -drift]) }, { scale: interpolate(t.value, [0, 1], [1, 1.1]) }],
+          transform: [
+            { translateY: interpolate(t.value, [0, 1], [0, -drift * 2.6]) },
+            { translateX: interpolate(t.value, [0, 0.5, 1], [-drift * 0.6, drift * 0.6, -drift * 0.6]) },
+            { rotate: `${interpolate(t.value, [0, 0.5, 1], [-9, 9, -9])}deg` },
+            { scale: interpolate(t.value, [0, 0.5, 1], [1, 1.22, 1]) },
+          ],
         };
     }
   });
@@ -104,7 +115,40 @@ function Mark({ mark, width, height, animate }: { mark: PoseArt['marks'][number]
   );
 }
 
-export function PoseArtView({ pose, width, height, animate = true }: { pose: PoseName; width: number; height: number; animate?: boolean }) {
+/** Where the little hearts start rising in the happy pose, as fractions of the picture, with when each one begins. */
+const RISING_HEARTS = [
+  { x: 0.7, y: 0.2, delay: 0 },
+  { x: 0.08, y: 0.32, delay: 900 },
+  { x: 0.3, y: 0.02, delay: 1800 },
+];
+
+/** A small heart that floats up from beside Dotty, swelling in and fading out, over and over. */
+function RisingHeart({ src, width, height, x, y, delay, animate }: { src: PoseArt['marks'][number]['src']; width: number; height: number; x: number; y: number; delay: number; animate: boolean }) {
+  const t = useSharedValue(0);
+  useEffect(() => {
+    if (!animate) {
+      t.value = 0;
+      return;
+    }
+    t.value = withDelay(delay, withRepeat(withTiming(1, { duration: 2700, easing: Easing.out(Easing.quad) }), -1, false));
+  }, [animate, delay, t]);
+  const size = width * 0.09;
+  const style = useAnimatedStyle(() => ({
+    opacity: interpolate(t.value, [0, 0.18, 0.7, 1], [0, 1, 0.9, 0]),
+    transform: [
+      { translateY: -t.value * height * 0.2 },
+      { translateX: Math.sin(t.value * Math.PI * 2) * width * 0.015 },
+      { scale: interpolate(t.value, [0, 0.3, 1], [0.4, 1, 0.8]) },
+    ],
+  }));
+  return (
+    <Animated.View pointerEvents="none" style={[{ position: 'absolute', left: x * width, top: y * height, width: size, height: size * 0.9 }, style]}>
+      <Image source={src} style={StyleSheet.absoluteFill} contentFit="contain" />
+    </Animated.View>
+  );
+}
+
+export function PoseArtView({ pose, width, height, animate = true, tint = null }: { pose: PoseName; width: number; height: number; animate?: boolean; tint?: string | null }) {
   const art: PoseArt = POSE_ART[pose];
   const reduced = useReducedMotion();
   const moving = animate && !reduced;
@@ -139,16 +183,24 @@ export function PoseArtView({ pose, width, height, animate = true }: { pose: Pos
   return (
     <View pointerEvents="none" style={{ width, height }}>
       {art.frames.map((source, i) => (
-        <TailFrame key={i} index={i} position={position} source={source} pad={art.pad} width={width} height={height} />
+        <TailFrame key={i} index={i} position={position} source={source} pad={art.pad} width={width} height={height} tint={tint} />
       ))}
       <Animated.View
         pointerEvents="none"
         style={[{ position: 'absolute', left: art.mouth.box[0] * width, top: art.mouth.box[1] * height, width: art.mouth.box[2] * width, height: art.mouth.box[3] * height }, mouthStyle]}>
         <Image source={art.mouth.src} style={StyleSheet.absoluteFill} contentFit="fill" />
+        {tint ? (
+          <View style={[StyleSheet.absoluteFill, { mixBlendMode: 'color' }]}>
+            <Image source={art.mouth.src} style={StyleSheet.absoluteFill} contentFit="fill" tintColor={tint} />
+          </View>
+        ) : null}
       </Animated.View>
       {art.marks.map((mark, i) => (
         <Mark key={i} mark={mark} width={width} height={height} animate={moving} />
       ))}
+      {pose === 'happy' && moving
+        ? RISING_HEARTS.map((h, i) => <RisingHeart key={i} src={art.marks[0].src} width={width} height={height} x={h.x} y={h.y} delay={h.delay} animate />)
+        : null}
     </View>
   );
 }

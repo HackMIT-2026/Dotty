@@ -111,6 +111,23 @@ def test_parent_logged_events_are_sourced_as_parent(client, family):
     assert db.events.find_one({"patient_id": family["pid"]})["source"] == "parent"
 
 
+def test_parent_can_send_a_note_to_the_clinician(client, family):
+    response = client.post(
+        f"/patients/{family['pid']}/notes/from-parent",
+        json={"text": "Maya had a low after soccer today."},
+        headers=family["parent"]["h"],
+    )
+    assert response.status_code == 200
+    note = response.json()
+    assert note["author_role"] == "parent" and note["author_name"] == "Alex"
+    assert client.get(f"/patients/{family['pid']}/notes", headers=family["doc"]["h"]).json()[0]["text"] == note["text"]
+    notification = client.get("/notifications", headers=family["doc"]["h"]).json()["notifications"][0]
+    assert notification["kind"] == "parent_note" and notification["data"]["note_id"] == note["id"]
+    parent_notifications = client.get("/notifications", headers=family["parent"]["h"]).json()
+    own_message = next(n for n in parent_notifications["notifications"] if n["data"].get("note_id") == note["id"])
+    assert own_message["read_at"] is not None
+
+
 # --- gamification ---------------------------------------------------------------------------
 
 

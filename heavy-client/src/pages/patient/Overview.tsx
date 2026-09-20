@@ -1,9 +1,9 @@
 import { useEffect, useMemo, useState } from 'react';
-import { CartesianGrid, Line, LineChart, ReferenceArea, ResponsiveContainer, Scatter, ScatterChart, Tooltip, XAxis, YAxis } from 'recharts';
+import { CartesianGrid, Line, LineChart, ReferenceArea, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts';
 
 import { Button, Card, Empty, H2, Pill, Stat } from '../../components/ui';
 import { api } from '../../lib/api';
-import { clock, dayLabel, timeAgo } from '../../lib/time';
+import { clock, dayLabel, localDate, timeAgo } from '../../lib/time';
 import type { DotEvent, Plan } from '../../lib/types';
 import { fmtBg, toUnit } from '../../lib/units';
 import { usePatient } from '../PatientLayout';
@@ -48,19 +48,25 @@ export default function Overview() {
     () => events.filter((e) => e.type === 'reading').map((e) => ({ t: new Date(e.ts).getTime(), bg: toUnit(e.data.bg_mgdl, unit) })),
     [events, unit],
   );
-  const markers = useMemo(
-    () =>
-      events
-        .filter((e) => ['meal', 'activity', 'bolus', 'basal'].includes(e.type))
-        .map((e) => ({ t: new Date(e.ts).getTime(), y: toUnit(low, unit), type: e.type })),
-    [events, low, unit],
-  );
-  const today = events.filter((e) => new Date(e.ts).toDateString() === new Date().toDateString());
+  const today = events.filter((e) => localDate(e.ts) === localDate(Date.now()));
   const carbs = today.filter((e) => e.type === 'meal').reduce((s, e) => s + (e.data.carbs_g ?? 0), 0);
   const insulin = today.filter((e) => e.type === 'bolus' || e.type === 'basal').reduce((s, e) => s + (e.data.units ?? 0), 0);
   const active = today.filter((e) => e.type === 'activity').reduce((s, e) => s + (e.data.minutes ?? 0), 0);
-  const domain: [number, number] = [Date.now() - hours * 3_600_000, Date.now()];
-  const tickFmt = (t: number) => (hours <= 24 ? clock(t) : new Date(t).toLocaleDateString(undefined, { month: 'numeric', day: 'numeric' }));
+  const domainEnd = Date.now();
+  const domainStartDate = new Date(domainEnd - hours * 3_600_000);
+  if (hours <= 24) domainStartDate.setHours(0, 0, 0, 0);
+  const domain: [number, number] = [domainStartDate.getTime(), domainEnd];
+  const ticks: number[] = [];
+  const firstTick = new Date(domain[0]);
+  firstTick.setHours(0, 0, 0, 0);
+  const tickStepHours = hours <= 24 ? 1 : 24;
+  for (const tick = new Date(firstTick); tick.getTime() <= domain[1]; tick.setHours(tick.getHours() + tickStepHours)) {
+    ticks.push(tick.getTime());
+  }
+  const tickFmt = (t: number) =>
+    hours <= 24
+      ? new Date(t).toLocaleTimeString(undefined, { hour: 'numeric', minute: '2-digit' })
+      : new Date(t).toLocaleDateString(undefined, { month: 'numeric', day: 'numeric' });
 
   return (
     <div className="flex flex-col gap-5">
@@ -90,44 +96,17 @@ export default function Overview() {
             <LineChart data={readings} margin={{ top: 8, right: 8, bottom: 8, left: -12 }}>
               <CartesianGrid stroke="#E6E2F5" vertical={false} />
               <ReferenceArea y1={toUnit(low, unit)} y2={toUnit(high, unit)} fill="#DDF7EC" fillOpacity={0.8} />
-              <XAxis type="number" dataKey="t" domain={domain} scale="time" tickFormatter={tickFmt} stroke="#6E6A8F" fontSize={12} />
+              <XAxis type="number" dataKey="t" domain={domain} scale="time" ticks={ticks} tickFormatter={tickFmt} stroke="#6E6A8F" fontSize={12} />
               <YAxis domain={[toUnit(40, unit), toUnit(320, unit)]} stroke="#6E6A8F" fontSize={12} />
               <Tooltip
                 labelFormatter={(t) => `${dayLabel(t as number)} ${clock(t as number)}`}
                 formatter={(v) => [`${v} ${unit}`, 'Glucose']}
                 contentStyle={{ borderRadius: 12, border: '1px solid #E6E2F5' }}
               />
-              <Line type="monotone" dataKey="bg" stroke="#6C5CE7" strokeWidth={2} dot={{ r: 3, fill: '#6C5CE7' }} isAnimationActive={false} />
+              <Line type="linear" dataKey="bg" stroke="#6C5CE7" strokeWidth={2} dot={{ r: 3, fill: '#6C5CE7' }} isAnimationActive={false} />
             </LineChart>
           </ResponsiveContainer>
         )}
-        {markers.length > 0 && (
-          <ResponsiveContainer width="100%" height={60}>
-            <ScatterChart margin={{ top: 4, right: 8, bottom: 4, left: -12 }}>
-              <XAxis type="number" dataKey="t" domain={domain} scale="time" tickFormatter={tickFmt} stroke="#6E6A8F" fontSize={11} />
-              <YAxis type="number" dataKey="y" hide domain={[0, 1]} />
-              <Tooltip
-                labelFormatter={(t) => `${dayLabel(t as number)} ${clock(t as number)}`}
-                formatter={(_v, _n, p) => [(p.payload as any).type, 'Logged']}
-                contentStyle={{ borderRadius: 12, border: '1px solid #E6E2F5' }}
-              />
-              {[
-                ['meal', '#F5A524'],
-                ['activity', '#2FB67C'],
-                ['bolus', '#4DA8FF'],
-                ['basal', '#5647C9'],
-              ].map(([type, color]) => (
-                <Scatter key={type} data={markers.filter((m) => m.type === type).map((m) => ({ ...m, y: 0.5 }))} fill={color} isAnimationActive={false} />
-              ))}
-            </ScatterChart>
-          </ResponsiveContainer>
-        )}
-        <div className="flex flex-wrap gap-3 text-xs font-bold text-ink-soft">
-          <span className="flex items-center gap-1"><i className="size-2.5 rounded-full bg-[#F5A524]" /> Meal</span>
-          <span className="flex items-center gap-1"><i className="size-2.5 rounded-full bg-[#2FB67C]" /> Activity</span>
-          <span className="flex items-center gap-1"><i className="size-2.5 rounded-full bg-[#4DA8FF]" /> Bolus</span>
-          <span className="flex items-center gap-1"><i className="size-2.5 rounded-full bg-[#5647C9]" /> Basal</span>
-        </div>
       </Card>
 
       <Card>

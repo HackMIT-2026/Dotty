@@ -14,20 +14,31 @@ export function imageTabIcon(source: ImageSourcePropType) {
   return () => <Image source={source} style={{ width: 40, height: 40 }} resizeMode="contain" />;
 }
 
-export const tabScreenOptions = (active: string) => ({
+/** `bottom` is the phone's bottom safe area (the home bar), so the labels are not drawn underneath it. */
+export const tabScreenOptions = (active: string, bottom = 0) => ({
   headerShown: false,
   tabBarActiveTintColor: active,
   tabBarInactiveTintColor: C.inkSoft,
   tabBarLabelStyle: { fontFamily: F.bold, fontSize: 12 },
-  tabBarStyle: { height: 64, paddingTop: 6 },
+  tabBarStyle: { height: 64 + bottom, paddingTop: 6, paddingBottom: bottom },
 });
 
-/** The kid's tab bar: sand coloured like the pond floor, with the current tab in a soft white pill. */
-export const childTabScreenOptions = (active: string) => ({
-  ...tabScreenOptions(active),
+/** The kid's tab bar in a given colour, with a soft white edge on top. Each kid tab picks its own colour. */
+export const childBar = (backgroundColor: string, bottom = 0) => ({
+  height: 78 + bottom,
+  paddingBottom: bottom,
+  paddingHorizontal: 6,
+  backgroundColor,
+  borderTopWidth: BORDER,
+  borderTopColor: C.glassLine,
+});
+
+/** The kid's tab bar: sand coloured like the pond floor on Dotty's home, with the current tab in a soft white pill. */
+export const childTabScreenOptions = (active: string, bottom = 0) => ({
+  ...tabScreenOptions(active, bottom),
   tabBarInactiveTintColor: C.ink,
   tabBarActiveTintColor: C.ink,
   tabBarActiveBackgroundColor: 'rgba(255, 255, 255, 0.6)',
   tabBarItemStyle: { borderRadius: R.lg, marginHorizontal: 4, marginVertical: 6 },
-  tabBarStyle: { height: 78, paddingHorizontal: 6, backgroundColor: C.sand, borderTopWidth: BORDER, borderTopColor: C.glassLine },
+  tabBarStyle: childBar(C.sand, bottom),
 });

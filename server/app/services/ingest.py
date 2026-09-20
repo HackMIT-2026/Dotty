@@ -1,6 +1,6 @@
 """Single entry point for new events (device sync and the simulator): screen, store, reward, alert."""
 
-from datetime import timedelta
+from datetime import timedelta, timezone
 
 from .. import db
 from ..util import new_id, now
@@ -49,7 +49,8 @@ def ingest(patient_id: str, raw_events: list[dict], actor_role: str | None = Non
             source = "parent"
         else:
             source = e["source"] if e["source"] in ("manual", "camera") else "manual"
-        ts = e["ts"] if e["ts"].tzinfo else e["ts"].replace(tzinfo=at.tzinfo)
+        ts = e["ts"] if e["ts"].tzinfo else e["ts"].replace(tzinfo=timezone.utc)
+        ts = ts.astimezone(timezone.utc)
         ts = min(ts, at)  # clamp clock skew so the future can't be farmed
         data = e.get("data", {})
         if e["type"] == "meal":

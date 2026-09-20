@@ -1,6 +1,6 @@
-import { useFocusEffect } from 'expo-router';
-import { useCallback, useState } from 'react';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { useFocusEffect, useLocalSearchParams } from 'expo-router';
+import { useCallback, useEffect, useState } from 'react';
+import { Pressable, StyleSheet, Text, View, type ImageSourcePropType } from 'react-native';
 
 import { DotCoin, Icon, type IconName } from '@/components/icon';
 import { Dotty } from '@/components/pet/dotty';
@@ -13,11 +13,11 @@ import { BADGES, DEFAULT_EQUIPPED } from '@/lib/pet';
 import { useStore } from '@/lib/store';
 import type { Pet, ShopItem, Slot } from '@/lib/types';
 
-const SLOTS: { id: Slot; label: string; icon: IconName }[] = [
-  { id: 'hat', label: 'Hats', icon: 'hat-fedora' },
-  { id: 'accessory', label: 'Extras', icon: 'glasses' },
-  { id: 'color', label: 'Colors', icon: 'palette' },
-  { id: 'background', label: 'Places', icon: 'image-filter-hdr' },
+const SLOTS: { id: Slot; label: string; icon: IconName; image: ImageSourcePropType }[] = [
+  { id: 'hat', label: 'Hats', icon: 'hat-fedora', image: require('@/assets/icons/hat.png') },
+  { id: 'accessory', label: 'Extras', icon: 'glasses', image: require('@/assets/icons/extras.png') },
+  { id: 'color', label: 'Colors', icon: 'palette', image: require('@/assets/icons/colors.png') },
+  { id: 'background', label: 'Places', icon: 'image-filter-hdr', image: require('@/assets/icons/places.png') },
 ];
 
 const RARITY_COLOR = { common: C.inkSoft, rare: C.sky, epic: C.primary } as const;
@@ -29,8 +29,18 @@ export default function Shop() {
   const setPet = useStore((s) => s.setPet);
   const pushToast = useStore((s) => s.pushToast);
   const bumpCheer = useStore((s) => s.bumpCheer);
+  const params = useLocalSearchParams<{ slot?: string; t?: string }>();
   const [slot, setSlot] = useState<Slot>('hat');
   const [tryOn, setTryOn] = useState<ShopItem | null>(null);
+
+  // the Shop tab's menu opens this page on the shelf the child picked (`t` changes on every pick)
+  useEffect(() => {
+    const picked = SLOTS.find((s) => s.id === params.slot);
+    if (picked) {
+      setSlot(picked.id);
+      setTryOn(null);
+    }
+  }, [params.slot, params.t]);
   const [busy, setBusy] = useState(false);
 
   useFocusEffect(
@@ -95,13 +105,13 @@ export default function Shop() {
           {buttonFor(tryOn)}
         </View>
       ) : (
-        <Small style={{ textAlign: 'center', paddingVertical: S.sm }}>Tap an item to try it on Dotty</Small>
+        <Small color={C.ink} style={{ textAlign: 'center', paddingVertical: S.sm }}>Tap an item to try it on Dotty</Small>
       )}
     </View>
   );
 
   return (
-    <Screen footer={footer}>
+    <Screen background={C.pageShop} footer={footer}>
       <PageHeader title="Shop">
         <View style={styles.wallet}>
           <DotCoin size={18} />
@@ -115,12 +125,12 @@ export default function Shop() {
 
       <Row style={{ flexWrap: 'wrap' }}>
         {SLOTS.map((s) => (
-          <Chip key={s.id} label={s.label} icon={s.icon} selected={slot === s.id} onPress={() => { setSlot(s.id); setTryOn(null); }} />
+          <Chip key={s.id} label={s.label} icon={s.icon} image={s.image} selected={slot === s.id} onPress={() => { setSlot(s.id); setTryOn(null); }} />
         ))}
       </Row>
 
       {shop.length === 0 ? (
-        <Small style={{ textAlign: 'center' }}>Connect to the internet to open the shop.</Small>
+        <Small color={C.ink} style={{ textAlign: 'center' }}>Connect to the internet to open the shop.</Small>
       ) : (
         <View style={styles.grid}>
           {items.map((item) => {
@@ -165,7 +175,7 @@ const styles = StyleSheet.create({
   wallet: { flexDirection: 'row', alignItems: 'center', gap: 6, backgroundColor: C.primarySoft, borderRadius: R.pill, paddingHorizontal: 11, paddingVertical: 6 },
   walletText: { ...font('800'), fontSize: 16, color: C.primaryDark },
   preview: { height: 200, borderRadius: R.lg },
-  footer: { width: '100%', maxWidth: 560, alignSelf: 'center', paddingHorizontal: S.md, paddingVertical: S.sm, backgroundColor: C.bg, borderTopWidth: 1, borderTopColor: C.line },
+  footer: { width: '100%', maxWidth: 560, alignSelf: 'center', paddingHorizontal: S.md, paddingVertical: S.sm, backgroundColor: C.pageShop },
   tryOn: { flexDirection: 'row', alignItems: 'center', gap: S.sm, backgroundColor: C.card, borderRadius: R.lg, padding: S.sm, paddingLeft: S.md, ...shadow },
   grid: { flexDirection: 'row', flexWrap: 'wrap', gap: S.sm },
   item: { width: '31.6%', alignItems: 'center', backgroundColor: C.card, borderRadius: R.md, padding: S.sm, borderWidth: 3, borderColor: 'transparent' },

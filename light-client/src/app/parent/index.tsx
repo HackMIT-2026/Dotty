@@ -111,7 +111,7 @@ export default function ParentHome() {
         </Row>
         {last ? (
           <Row style={{ justifyContent: 'space-between', alignItems: 'flex-end' }}>
-            <View>
+            <View style={{ flexShrink: 1 }}>
               <Small>Last glucose · {timeAgo(last.ts, now)}</Small>
               <Row style={{ alignItems: 'baseline' }}>
                 <Text style={[styles.big, { color: bgColor(bgOf(last), low, high) }]}>{fmtBg(bgOf(last), unit, false)}</Text>

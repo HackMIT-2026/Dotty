@@ -57,12 +57,14 @@ export function GlucoseChart({ readings, hours, now, low, high, height = 190, ma
             </SvgText>
           ))}
           <Line x1={PAD.left} x2={PAD.left + plotW} y1={y(250)} y2={y(250)} stroke={C.line} strokeDasharray="4 4" />
-          {ticks.map((tk) => {
+          {ticks.map((tk, i) => {
             const d = new Date(tk);
             const label = hours <= 24 ? `${d.getHours()}:00` : `${d.getMonth() + 1}/${d.getDate()}`;
             const tx = PAD.left + ((tk - start) / (now - start)) * plotW;
+            // the first and last labels are tucked against the chart's edges so they are never cut off
+            const anchor = i === ticks.length - 1 ? 'end' : 'middle';
             return (
-              <SvgText key={tk} x={tx} y={height - 6} fontSize={11} fontFamily={F.bold} fill={C.inkSoft} textAnchor="middle">
+              <SvgText key={tk} x={tx} y={height - 6} fontSize={11} fontFamily={F.bold} fill={C.inkSoft} textAnchor={anchor}>
                 {label}
               </SvgText>
             );

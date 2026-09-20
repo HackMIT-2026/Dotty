@@ -88,6 +88,8 @@ interface State {
   lastSyncedAt: number | null;
   toasts: Toast[];
   cheer: number;
+  /** Counts up each time the child finishes something; the confetti listens for it. Not saved. */
+  confetti: number;
 
   setApiUrl: (url: string | null) => void;
   setForceOffline: (v: boolean) => void;
@@ -107,6 +109,7 @@ interface State {
   pushToast: (t: Omit<Toast, 'id'>) => void;
   dismissToast: (id: number) => void;
   bumpCheer: () => void;
+  burstConfetti: () => void;
 }
 
 const EMPTY_DATA = {
@@ -134,6 +137,7 @@ export const useStore = create<State>()(
       lastSyncedAt: null,
       toasts: [],
       cheer: 0,
+      confetti: 0,
 
       setApiUrl: (apiUrl) => set({ apiUrl }),
       setForceOffline: (forceOffline) => set({ forceOffline, ...(forceOffline ? { online: false } : {}) }),
@@ -202,6 +206,7 @@ export const useStore = create<State>()(
       pushToast: (t) => set((s) => ({ toasts: [...s.toasts, { ...t, id: toastSeq++ }].slice(-3) })),
       dismissToast: (id) => set((s) => ({ toasts: s.toasts.filter((t) => t.id !== id) })),
       bumpCheer: () => set((s) => ({ cheer: s.cheer + 1 })),
+      burstConfetti: () => set((s) => ({ confetti: s.confetti + 1 })),
     }),
     {
       name: 'dotty-store-v1',

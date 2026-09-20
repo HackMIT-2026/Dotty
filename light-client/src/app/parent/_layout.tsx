@@ -1,13 +1,16 @@
 import { Tabs } from 'expo-router/js-tabs';
 
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+
 import { tabIcon, tabScreenOptions } from '@/components/tab-icon';
 import { C } from '@/constants/theme';
 import { unreadCount, useStore } from '@/lib/store';
 
 export default function ParentTabs() {
   const unread = useStore(unreadCount);
+  const insets = useSafeAreaInsets();
   return (
-    <Tabs screenOptions={tabScreenOptions(C.primary)}>
+    <Tabs screenOptions={tabScreenOptions(C.primary, insets.bottom)}>
       <Tabs.Screen name="index" options={{ title: 'Today', tabBarIcon: tabIcon('chart-line', 'chart-line') }} />
       <Tabs.Screen name="care-plan" options={{ title: 'Care plan', tabBarIcon: tabIcon('clipboard-check', 'clipboard-check-outline') }} />
       <Tabs.Screen

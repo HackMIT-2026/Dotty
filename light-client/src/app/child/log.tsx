@@ -2,10 +2,12 @@ import { router, useLocalSearchParams } from 'expo-router';
 import { useEffect, useState } from 'react';
 import { Image, Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
 
-import { Icon, IconTile, type IconName } from '@/components/icon';
+import { Icon, type IconName } from '@/components/icon';
 import { PageHeader } from '@/components/page-header';
 import { Body, Button, Card, Chip, H2, Row, Screen, Small } from '@/components/ui';
 import { C, R, S, font } from '@/constants/theme';
+import { FoodIcon } from '@/components/food-icon';
+import { PlayIcon } from '@/components/play-icon';
 import { ACTIVITIES, FOODS } from '@/data/foods';
 import { api } from '@/lib/api';
 import { logGuard } from '@/lib/limits';
@@ -173,7 +175,7 @@ function Eat() {
               key={f.id}
               onPress={() => toggle(f.id)}
               style={({ pressed }) => [styles.food, on && styles.foodOn, pressed && { transform: [{ scale: 0.95 }] }]}>
-              <IconTile name={f.icon} color={f.color} tint={on ? '#fff' : `${f.color}1F`} size={38} radius={R.sm} />
+              <FoodIcon id={f.id} size={46} />
               <Text style={styles.foodName} numberOfLines={1}>
                 {f.name}
               </Text>
@@ -268,19 +270,19 @@ function Play() {
       <H2>What did you play?</H2>
       <Row style={{ flexWrap: 'wrap' }}>
         {ACTIVITIES.map((a) => (
-          <Chip key={a.id} label={a.name} icon={a.icon} selected={kind === a.id} onPress={() => setKind(a.id)} />
+          <Chip key={a.id} label={a.name} icon={a.icon} art={<PlayIcon id={a.id} />} selected={kind === a.id} onPress={() => setKind(a.id)} />
         ))}
       </Row>
       <Small>For how long?</Small>
       <Row style={{ flexWrap: 'wrap' }}>
         {[15, 30, 45, 60, 90].map((m) => (
-          <Chip key={m} label={`${m} min`} icon="timer-outline" selected={minutes === m} onPress={() => setMinutes(m)} />
+          <Chip key={m} label={`${m} min`} icon="timer-outline" art={<PlayIcon id={`min-${m}`} />} selected={minutes === m} onPress={() => setMinutes(m)} />
         ))}
       </Row>
       <Small>How hard?</Small>
       <Row style={{ flexWrap: 'wrap' }}>
         {INTENSITY.map((i) => (
-          <Chip key={i.id} label={i.label} icon={i.icon} selected={intensity === i.id} onPress={() => setIntensity(i.id)} />
+          <Chip key={i.id} label={i.label} icon={i.icon} art={<PlayIcon id={i.id} />} selected={intensity === i.id} onPress={() => setIntensity(i.id)} />
         ))}
       </Row>
       {guard.ok ? null : <Resting message={guard.message!} />}
@@ -320,7 +322,7 @@ export default function Log() {
   }, [params.mode]);
 
   return (
-    <Screen>
+    <Screen background={C.pageCare}>
       <PageHeader title="Care" />
       <View style={styles.modes}>
         {CARE_ACTIONS.map((m) => (

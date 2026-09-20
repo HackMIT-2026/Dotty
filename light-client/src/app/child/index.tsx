@@ -5,7 +5,8 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { DotCoin, Icon } from '@/components/icon';
 import { Dotty } from '@/components/pet/dotty';
 import { SettingsButton } from '@/components/page-header';
-import { PondBackdrop } from '@/components/pet/scene';
+import { SceneBackdrop } from '@/components/pet/scene';
+import { SpeechBubble } from '@/components/speech-bubble';
 import { SyncBadge } from '@/components/sync-badge';
 import { Card, H2, ProgressBar, Row, Screen, Small } from '@/components/ui';
 import { BORDER, C, MAX_WIDTH, R, S, font, shadow } from '@/constants/theme';
@@ -51,7 +52,7 @@ export default function ChildHome() {
   return (
     <View style={styles.page}>
       <View style={styles.column}>
-        <PondBackdrop />
+        <SceneBackdrop background={equipped.background} />
         <Screen bleed background="transparent">
           <View style={[styles.hero, { height: heroHeight, paddingTop: insets.top }]}>
             <View style={[styles.topBar, { top: insets.top + S.sm }]}>
@@ -64,17 +65,14 @@ export default function ChildHome() {
                 <SettingsButton />
               </Row>
             </View>
-            <View style={styles.bubble}>
-              <Text style={styles.bubbleText}>{MOOD_MESSAGES[mood]}</Text>
-              <View style={styles.bubbleTail} />
-            </View>
+            <SpeechBubble text={MOOD_MESSAGES[mood]} />
             <Dotty equipped={equipped} mood={mood} size={230} cheer={cheer} />
           </View>
 
           <View style={styles.body}>
             <Card tint={C.glass} style={styles.glassCard}>
               <Row style={{ justifyContent: 'space-between' }}>
-                <View>
+                <View style={{ flexShrink: 1 }}>
                   <H2>{pet?.name ?? 'Dotty'}</H2>
                   <Small>
                     Hi {name ?? 'friend'}! Level {pet?.level ?? 1}
@@ -142,17 +140,6 @@ const styles = StyleSheet.create({
   topBar: { position: 'absolute', left: S.md, right: S.md, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
   glass: { flexDirection: 'row', alignItems: 'center', gap: 6, backgroundColor: 'rgba(255,255,255,0.92)', borderRadius: R.pill, paddingHorizontal: 12, paddingVertical: 6 },
   dotsText: { ...font('900'), fontSize: 17, color: C.ink },
-  bubble: { backgroundColor: '#fff', borderRadius: R.lg, paddingHorizontal: S.md, paddingVertical: 10, marginBottom: 46, maxWidth: 280, ...shadow },
-  bubbleTail: {
-    position: 'absolute',
-    bottom: -7,
-    alignSelf: 'center',
-    width: 14,
-    height: 14,
-    backgroundColor: '#fff',
-    transform: [{ rotate: '45deg' }],
-  },
-  bubbleText: { ...font('800'), fontSize: 16, color: C.ink, textAlign: 'center' },
   body: { padding: S.md, gap: S.md, width: '100%', paddingBottom: S.xl },
   glassCard: { borderColor: C.glassLine, borderRadius: R.lg },
   streak: { flexDirection: 'row', alignItems: 'center', gap: 4, backgroundColor: C.sunSoft, borderRadius: R.pill, paddingHorizontal: 12, paddingVertical: 6 },
