@@ -14,6 +14,7 @@ interface Note {
   id: string;
   text: string;
   created_at: string;
+  author_name?: string;
 }
 
 function Item({ label, value, icon }: { label: string; value: string; icon?: IconName }) {
@@ -104,12 +105,12 @@ export default function PlanScreen() {
         </Card>
       ) : null}
 
-      <H2>Notes from {clinician ?? 'your care team'}</H2>
+      <H2>Notes from your care team</H2>
       {notes === null ? <Small>Connect to load notes.</Small> : null}
       {notes?.length === 0 ? <Small>No notes yet.</Small> : null}
       {notes?.map((n) => (
         <Card key={n.id}>
-          <Small>{dayLabel(n.created_at, now)}</Small>
+          <Small>{n.author_name ? `${n.author_name} · ` : ''}{dayLabel(n.created_at, now)}</Small>
           <Body>{n.text}</Body>
         </Card>
       ))}

@@ -12,7 +12,7 @@ export default function ParentTabs() {
       <Tabs.Screen name="care-plan" options={{ title: 'Care plan', tabBarIcon: tabIcon('clipboard-check', 'clipboard-check-outline') }} />
       <Tabs.Screen
         name="inbox"
-        options={{ title: 'Inbox', tabBarBadge: unread > 0 ? unread : undefined, tabBarIcon: tabIcon('bell', 'bell-outline') }}
+        options={{ title: 'Messages', tabBarBadge: unread > 0 ? unread : undefined, tabBarIcon: tabIcon('bell', 'bell-outline') }}
       />
       <Tabs.Screen name="plan" options={{ title: 'Settings', tabBarIcon: tabIcon('tune', 'tune-variant') }} />
     </Tabs>

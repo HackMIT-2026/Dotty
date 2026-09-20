@@ -122,7 +122,7 @@ export interface PetPlanQuest extends CareTask {
   done: boolean;
 }
 
-export type NotificationKind = 'clinician_note' | 'missed_treatment' | 'out_of_range' | 'reward' | 'high_five' | 'care_summary';
+export type NotificationKind = 'clinician_note' | 'parent_note' | 'missed_treatment' | 'out_of_range' | 'reward' | 'high_five' | 'care_summary';
 
 export interface AppNotification {
   id: string;
