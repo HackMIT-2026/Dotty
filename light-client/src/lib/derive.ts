@@ -21,6 +21,62 @@ export const MOOD_MESSAGES: Record<Mood, string> = {
 
 const t = (e: DotEvent) => new Date(e.ts).getTime();
 
+/** How long Dotty stays in her happy "thank you" pose after something is logged. */
+export const REACTION_MS = 5 * 60_000;
+
+export interface DottyState {
+  mood: Mood;
+  /** What her speech bubble says. It always matches the picture. */
+  message: string;
+  /** Show the cheering picture: she has just been fed, played with, given medicine, or a quest is done. */
+  celebrate: boolean;
+}
+
+const REACTIONS = {
+  meal: 'Yum! Thank you for feeding me!',
+  activity: "That was so much fun! Let's play again soon!",
+  medicine: "Medicine done. You're doing great!",
+  task: 'Quest complete! Great job!',
+  checkup: 'Thanks for checking on me!',
+} as const;
+
+/**
+ * What Dotty looks like and says, from the mood and from what was just logged.
+ *  - Just after a meal, play, medicine or a finished quest she cheers and says thanks, so the words and picture agree.
+ *  - After a check-up she cheers too, unless the reading was low or high: then she keeps asking for what she needs.
+ *  - After a snack that follows a low reading she says thanks and asks for another check-up later, and keeps cheering
+ *    until a new reading comes in.
+ *  - Otherwise her mood decides both the picture and the words (mirrors gamification.compute_mood).
+ */
+export function dottyState(events: DotEvent[], now: number, missedTask = false): DottyState {
+  const real = events.filter((e) => e.source !== 'simulator' && e.type !== 'pet');
+  const mood = moodFor(lastReading(events), now, missedTask);
+
+  const newest = real.reduce<DotEvent | null>((a, e) => (!a || t(e) > t(a) ? e : a), null);
+  if (newest && now - t(newest) < REACTION_MS && now >= t(newest) - 60_000) {
+    const kind =
+      newest.type === 'meal' ? 'meal'
+      : newest.type === 'activity' ? 'activity'
+      : newest.type === 'bolus' || newest.type === 'basal' ? 'medicine'
+      : newest.type === 'task' ? 'task'
+      : 'checkup';
+    const needsHelp = mood === 'shaky' || mood === 'sluggish';
+    if (kind === 'meal' && mood === 'shaky') {
+      return { mood, message: "Yum, thank you! Let's check on me again in a little while.", celebrate: true };
+    }
+    if (kind !== 'checkup' || !needsHelp) return { mood, message: REACTIONS[kind], celebrate: true };
+  }
+
+  if (mood === 'shaky') {
+    const last = Math.max(0, ...events.filter((e) => e.type === 'reading' && e.source !== 'simulator').map(t));
+    if (real.some((e) => e.type === 'meal' && t(e) > last)) {
+      // the message is a thank-you, so it always goes with the cheering picture, however long ago the snack was
+      return { mood, message: "Yum, thank you! Let's check on me again in a little while.", celebrate: true };
+    }
+  }
+  return { mood, message: MOOD_MESSAGES[mood], celebrate: false };
+}
+
 export function ofType(events: DotEvent[], type: DotEvent['type']): DotEvent[] {
   return events.filter((e) => e.type === type).sort((a, b) => t(a) - t(b));
 }

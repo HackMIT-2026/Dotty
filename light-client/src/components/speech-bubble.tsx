@@ -6,9 +6,9 @@ import { C, R, S, font, shadow } from '@/constants/theme';
 
 /**
  * Dotty's speech bubble. It sits on a thicker pond-blue bottom edge, like the block buttons, and pops out of its
- * tail whenever it appears or the words change. With reduced motion it just shows.
+ * tail whenever it appears or the words change. `gap` is the space between the bubble's tail and Dotty (a tall hat needs more). With reduced motion it just shows.
  */
-export function SpeechBubble({ text }: { text: string }) {
+export function SpeechBubble({ text, gap = 10 }: { text: string; gap?: number }) {
   const reduced = useReducedMotion();
   const pop = useSharedValue(1); // 0 hidden, 1 shown (overshoots a little while popping)
 
@@ -27,7 +27,7 @@ export function SpeechBubble({ text }: { text: string }) {
   }));
 
   return (
-    <Animated.View style={[styles.wrap, style]}>
+    <Animated.View style={[styles.wrap, { marginBottom: gap }, style]}>
       <View style={styles.bubble}>
         <Text style={styles.text}>{text}</Text>
       </View>
@@ -40,7 +40,7 @@ const EDGE = 4;
 
 const styles = StyleSheet.create({
   // it grows out of the tail, so scale from the bottom middle
-  wrap: { alignItems: 'center', marginBottom: 46, maxWidth: 280, transformOrigin: '50% 100%' },
+  wrap: { alignItems: 'center', maxWidth: 280, transformOrigin: '50% 100%' },
   bubble: {
     backgroundColor: '#fff',
     borderRadius: R.lg,

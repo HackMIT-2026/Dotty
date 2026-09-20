@@ -5,11 +5,12 @@
  * Each pose has its own anchor (where the head sits in that image), so a hat lands correctly whether Dotty is
  * sitting, curious or asleep. Anchors are fractions of the image, measured from the artwork.
  */
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 import Animated, {
   Easing,
   useAnimatedStyle,
+  useReducedMotion,
   useSharedValue,
   withRepeat,
   withSequence,
@@ -133,10 +134,19 @@ interface DottyProps {
   size?: number;
   /** Increment to make Dotty cheer. */
   cheer?: number;
+  /** Hold the cheering picture (she was just fed, played with, and so on). */
+  celebrate?: boolean;
+  /** Skip the short cheer when something is logged (she still needs a snack or a walk, so cheering would not fit). */
+  muteCheer?: boolean;
+  /** `gentle`: one slow bounce, then a long rest, over and over (for the parent's small Dotty). Default bobs all the time. */
+  bounce?: 'default' | 'gentle';
   animated?: boolean;
 }
 
-export function Dotty({ equipped, mood = 'bouncy', size = 220, cheer = 0, animated = true }: DottyProps) {
+export function Dotty({ equipped, mood = 'bouncy', size = 220, cheer = 0, celebrate = false, muteCheer = false, bounce = 'default', animated = true }: DottyProps) {
+  const reduceMotion = useReducedMotion();
+  const muteRef = useRef(muteCheer);
+  muteRef.current = muteCheer;
   const bob = useSharedValue(0);
   const jump = useSharedValue(0);
   const squish = useSharedValue(1);
@@ -144,6 +154,19 @@ export function Dotty({ equipped, mood = 'bouncy', size = 220, cheer = 0, animat
 
   useEffect(() => {
     if (!animated) return;
+    if (bounce === 'gentle') {
+      if (reduceMotion) return;
+      // up slowly, down slowly, then rest for a few seconds before the next bounce
+      bob.value = withRepeat(
+        withSequence(
+          withTiming(-12, { duration: 1300, easing: Easing.out(Easing.quad) }),
+          withTiming(0, { duration: 1500, easing: Easing.inOut(Easing.quad) }),
+          withTiming(0, { duration: 3600 }),
+        ),
+        -1,
+      );
+      return;
+    }
     const speed = mood === 'bouncy' ? 900 : mood === 'shaky' ? 140 : 1600;
     const height = mood === 'bouncy' ? -10 : mood === 'shaky' ? -2 : -4;
     bob.value = withRepeat(
@@ -153,10 +176,10 @@ export function Dotty({ equipped, mood = 'bouncy', size = 220, cheer = 0, animat
       ),
       -1,
     );
-  }, [animated, mood, bob]);
+  }, [animated, mood, bounce, reduceMotion, bob]);
 
   useEffect(() => {
-    if (!animated || cheer === 0) return;
+    if (!animated || cheer === 0 || muteRef.current) return;
     jump.value = withSequence(withTiming(-40, { duration: 180 }), withSpring(0, { damping: 6, stiffness: 180 }));
     squish.value = withSequence(withTiming(0.92, { duration: 120 }), withSpring(1, { damping: 5 }));
     setCheering(true);
@@ -168,7 +191,7 @@ export function Dotty({ equipped, mood = 'bouncy', size = 220, cheer = 0, animat
     transform: [{ translateY: bob.value + jump.value }, { scaleY: squish.value }, { scaleX: 2 - squish.value }],
   }));
 
-  const poseName = cheering ? 'cheering' : MOOD_POSE[mood];
+  const poseName = cheering || celebrate ? 'cheering' : MOOD_POSE[mood];
   const pose = POSES[poseName];
   const glow = BODY_COLORS[equipped.color] ?? BODY_COLORS.color_sky;
 
