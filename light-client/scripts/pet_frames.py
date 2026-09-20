@@ -211,10 +211,12 @@ def save(im, path, scale):
 
 def main():
     OUT.mkdir(parents=True, exist_ok=True)
-    only = set(sys.argv[1:])  # optionally rebuild the tail frames of just these poses, e.g. `pet_frames.py sleepy`
+    args = sys.argv[1:]
+    no_tail = '--no-tail' in args  # leave every tail frame as it is (they take minutes to rebuild)
+    only = {a for a in args if not a.startswith('--')}  # optionally rebuild the tail frames of just these poses
     manifest = {}
     for name, cfg in POSES.items():
-        frames_wanted = not only or name in only
+        frames_wanted = not no_tail and (not only or name in only)
         im = load(name)
         W, H = im.size
         scale = cfg['out_width'] / W

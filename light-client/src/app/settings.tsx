@@ -1,12 +1,14 @@
 import { useState } from 'react';
-import { Switch, Text, View } from 'react-native';
+import { Pressable, StyleSheet, Switch, Text, View } from 'react-native';
 
 import { PIN_LENGTH, PinPad } from '@/components/pin-pad';
 import { ServerField } from '@/components/server-field';
 import { GlucoseUnitToggle } from '@/components/unit-toggle';
 import { Body, Button, Card, H2, Row, Screen, Small } from '@/components/ui';
-import { C, S, font } from '@/constants/theme';
+import { Icon } from '@/components/icon';
+import { BORDER, C, R, S, font } from '@/constants/theme';
 import { api, errorText } from '@/lib/api';
+import { EFFECT_STYLES, SONGS, playSfx } from '@/lib/sounds';
 import { useStore } from '@/lib/store';
 import { syncNow } from '@/lib/sync';
 import { fmtBg, useGlucoseUnit } from '@/lib/units';
@@ -82,6 +84,14 @@ export default function Settings() {
   const setForceOffline = useStore((s) => s.setForceOffline);
   const pending = useStore((s) => s.outbox.length);
   const signOut = useStore((s) => s.signOut);
+  const musicOn = useStore((s) => s.musicOn);
+  const soundOn = useStore((s) => s.soundOn);
+  const setMusicOn = useStore((s) => s.setMusicOn);
+  const setSoundOn = useStore((s) => s.setSoundOn);
+  const song = useStore((s) => s.song);
+  const setSong = useStore((s) => s.setSong);
+  const sfxStyle = useStore((s) => s.sfxStyle);
+  const setSfxStyle = useStore((s) => s.setSfxStyle);
   const family = session?.family;
 
   return (
@@ -103,6 +113,61 @@ export default function Settings() {
       {session?.user.role === 'parent' && family?.child ? <ChildPinCard childName={family.child.name} /> : null}
 
       <GlucoseUnitCard isParent={session?.user.role === 'parent'} />
+
+      {session?.user.role === 'child' ? (
+        <Card>
+          <H2>Sounds and music</H2>
+          <Row>
+            <Body style={{ flex: 1 }}>Background music</Body>
+            <Switch value={musicOn} onValueChange={setMusicOn} />
+          </Row>
+          <Small color={C.ink}>Pick a song</Small>
+          <View style={{ gap: S.sm }}>
+            {SONGS.map((s) => {
+              const on = s.id === song;
+              return (
+                <Pressable
+                  key={s.id}
+                  accessibilityRole="button"
+                  onPress={() => {
+                    setSong(s.id);
+                    setMusicOn(true);
+                  }}
+                  style={({ pressed }) => [songStyles.row, on && songStyles.rowOn, pressed && { opacity: 0.85 }]}>
+                  <View style={[songStyles.dot, on && songStyles.dotOn]}>{on ? <Icon name="music" size={16} color={C.ink} /> : null}</View>
+                  <View style={{ flex: 1 }}>
+                    <Body style={font('800')}>{s.label}</Body>
+                    <Small>{s.mood}</Small>
+                  </View>
+                </Pressable>
+              );
+            })}
+          </View>
+          <Row>
+            <Body style={{ flex: 1 }}>Button sounds</Body>
+            <Switch value={soundOn} onValueChange={setSoundOn} />
+          </Row>
+          <Small color={C.ink}>Button sound style</Small>
+          <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: S.sm }}>
+            {EFFECT_STYLES.map((e) => {
+              const on = e.id === sfxStyle;
+              return (
+                <Pressable
+                  key={e.id}
+                  accessibilityRole="button"
+                  onPress={() => {
+                    setSfxStyle(e.id);
+                    setSoundOn(true);
+                    setTimeout(() => playSfx('success'), 60);
+                  }}
+                  style={({ pressed }) => [songStyles.chip, on && songStyles.chipOn, pressed && { opacity: 0.85 }]}>
+                  <Text style={[songStyles.chipText, on && { color: C.ink }]}>{e.label}</Text>
+                </Pressable>
+              );
+            })}
+          </View>
+        </Card>
+      ) : null}
 
       <Card>
         <H2>Offline mode</H2>
@@ -129,3 +194,13 @@ export default function Settings() {
     </Screen>
   );
 }
+
+const songStyles = StyleSheet.create({
+  row: { flexDirection: 'row', alignItems: 'center', gap: S.md, padding: S.md, borderRadius: R.md, backgroundColor: C.bg, borderWidth: BORDER, borderColor: C.line },
+  rowOn: { backgroundColor: C.sunSoft, borderColor: C.sun },
+  dot: { width: 30, height: 30, borderRadius: 15, borderWidth: BORDER, borderColor: C.line, alignItems: 'center', justifyContent: 'center', backgroundColor: C.card },
+  chip: { paddingHorizontal: 16, paddingVertical: 10, borderRadius: R.pill, backgroundColor: C.bg, borderWidth: BORDER, borderColor: C.line },
+  chipOn: { backgroundColor: C.sun, borderColor: C.sun },
+  chipText: { ...font('800'), fontSize: 15, color: C.inkSoft },
+  dotOn: { backgroundColor: C.sun, borderColor: C.sun },
+});

@@ -10,6 +10,7 @@ import { Button, Chip, Row, Screen, Small } from '@/components/ui';
 import { C, R, S, font, shadow } from '@/constants/theme';
 import { api, errorText } from '@/lib/api';
 import { BADGES, DEFAULT_EQUIPPED } from '@/lib/pet';
+import { playSfx } from '@/lib/sounds';
 import { useStore } from '@/lib/store';
 import type { Pet, ShopItem, Slot } from '@/lib/types';
 
@@ -63,6 +64,7 @@ export default function Shop() {
       if (!owned) {
         await api<Pet>(`/pet/${pet.id}/buy`, { method: 'POST', body: { item_id: item.id } });
         pushToast({ kind: 'reward', text: `You got the ${item.name}!` });
+        playSfx('coin');
       }
       const wearing = equipped[item.slot] === item.id;
       const removable = item.slot === 'hat' || item.slot === 'accessory';

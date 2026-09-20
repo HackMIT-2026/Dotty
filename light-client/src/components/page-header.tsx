@@ -3,10 +3,12 @@ import type { ReactNode } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
 
 import { R, S, shadow } from '@/constants/theme';
+import { useStore } from '@/lib/store';
 
 import { SyncBadge } from './sync-badge';
 import { H1 } from './ui';
 import { ParentIcon } from './parent-icon';
+import { SoundButton } from './sound-button';
 
 /** The gear that opens Settings. Shown in the same top-right spot on every signed-in screen. */
 export function SettingsButton() {
@@ -24,6 +26,7 @@ export function SettingsButton() {
 
 /** Page title with the sync status and Settings on the right. `children` adds extra items before them. */
 export function PageHeader({ title, children }: { title: string; children?: ReactNode }) {
+  const role = useStore((s) => s.session?.user.role);
   return (
     <View style={styles.row}>
       <H1 style={styles.title} numberOfLines={1}>
@@ -31,6 +34,7 @@ export function PageHeader({ title, children }: { title: string; children?: Reac
       </H1>
       <View style={styles.right}>
         {children}
+        {role === 'child' ? <SoundButton /> : null}
         <SyncBadge />
         <SettingsButton />
       </View>

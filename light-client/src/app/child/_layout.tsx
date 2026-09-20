@@ -4,8 +4,10 @@ import { useState } from 'react';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { childBar, childTabScreenOptions, imageTabIcon } from '@/components/tab-icon';
+import { MusicHost } from '@/components/music-host';
 import { ShopSheet } from '@/components/shop-sheet';
 import { C } from '@/constants/theme';
+import { playSfx } from '@/lib/sounds';
 
 export default function ChildTabs() {
   const [shopMenu, setShopMenu] = useState(false);
@@ -13,7 +15,8 @@ export default function ChildTabs() {
 
   return (
     <>
-      <Tabs screenOptions={childTabScreenOptions(C.primary, bottom)}>
+      <MusicHost />
+      <Tabs screenOptions={childTabScreenOptions(C.primary, bottom)} screenListeners={{ tabPress: () => playSfx('pop') }}>
         <Tabs.Screen name="index" options={{ title: 'Dotty', tabBarIcon: imageTabIcon(require('@/assets/icons/dotty.png')) }} />
         <Tabs.Screen name="log" options={{ title: 'Care', tabBarIcon: imageTabIcon(require('@/assets/icons/care.png')), tabBarStyle: childBar(C.barCare, bottom) }} />
         <Tabs.Screen name="quests" options={{ title: 'Quests', tabBarIcon: imageTabIcon(require('@/assets/icons/quest.png')), tabBarStyle: childBar(C.barQuests, bottom) }} />

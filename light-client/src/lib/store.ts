@@ -88,6 +88,13 @@ interface State {
   cheer: number;
   /** Counts up each time the child finishes something; the confetti listens for it. Not saved. */
   confetti: number;
+  /** Sound effects and background music on the child's screens. Saved on the device. */
+  soundOn: boolean;
+  musicOn: boolean;
+  /** Which background song the child picked (an id from SONGS in sounds.ts). */
+  song: string;
+  /** Which style of button sounds the child picked (an id from EFFECT_STYLES in sounds.ts). */
+  sfxStyle: string;
 
   setApiUrl: (url: string | null) => void;
   setForceOffline: (v: boolean) => void;
@@ -108,6 +115,10 @@ interface State {
   dismissToast: (id: number) => void;
   bumpCheer: () => void;
   burstConfetti: () => void;
+  setSoundOn: (on: boolean) => void;
+  setMusicOn: (on: boolean) => void;
+  setSong: (id: string) => void;
+  setSfxStyle: (id: string) => void;
 }
 
 const EMPTY_DATA = {
@@ -136,6 +147,10 @@ export const useStore = create<State>()(
       toasts: [],
       cheer: 0,
       confetti: 0,
+      soundOn: true,
+      musicOn: true,
+      song: 'pond',
+      sfxStyle: 'bubbles',
 
       setApiUrl: (apiUrl) => set({ apiUrl }),
       setForceOffline: (forceOffline) => set({ forceOffline, ...(forceOffline ? { online: false } : {}) }),
@@ -204,6 +219,10 @@ export const useStore = create<State>()(
       dismissToast: (id) => set((s) => ({ toasts: s.toasts.filter((t) => t.id !== id) })),
       bumpCheer: () => set((s) => ({ cheer: s.cheer + 1 })),
       burstConfetti: () => set((s) => ({ confetti: s.confetti + 1 })),
+      setSoundOn: (soundOn) => set({ soundOn }),
+      setMusicOn: (musicOn) => set({ musicOn }),
+      setSong: (song) => set({ song }),
+      setSfxStyle: (sfxStyle) => set({ sfxStyle }),
     }),
     {
       name: 'dotty-store-v1',
@@ -223,6 +242,10 @@ export const useStore = create<State>()(
         shop: s.shop,
         cursor: s.cursor,
         seenRewardIds: s.seenRewardIds,
+        soundOn: s.soundOn,
+        musicOn: s.musicOn,
+        song: s.song,
+        sfxStyle: s.sfxStyle,
       }),
     },
   ),
