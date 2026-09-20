@@ -126,6 +126,7 @@ export interface PetPlanQuest extends CareTask {
 
 export type NotificationKind =
   | 'clinician_note'
+  | 'parent_note'
   | 'missed_treatment'
   | 'out_of_range'
   | 'reward'
