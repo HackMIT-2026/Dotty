@@ -1,6 +1,6 @@
 fastapi>=0.115
 uvicorn[standard]>=0.30
-pymongo>=4.8
+pymongo[srv]>=4.8  # [srv] pulls dnspython, needed for Atlas mongodb+srv:// URIs
 pydantic>=2.7
 pyjwt>=2.8
 anthropic>=1.0  # carb estimates from what a child types (services/food.py); optional at runtime

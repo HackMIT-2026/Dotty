@@ -151,6 +151,56 @@ app logs both, and both have their own mark on the glucose charts.
 - **Care plan:** add a task in the portal; the child's app shows it as a quest within 15 seconds, and the parent's Care plan tab lists it with the instructions. Completing the matching log (a check-up, insulin, a meal, activity, or the "Done!" button for free-form tasks) pays the Dots and fills Dotty's Love meter.
 - **Simulator:** open a patient in the clinician portal and click **Demo** to run Normal, Going high, Going low, or Missed lunch; click **Stop** to end the simulation. The API is also available: `POST /simulator/{patient_id}` with `{"scenario": "high" | "low" | "normal" | "skip_lunch", "speed": 60}` streams fake glucose readings or raises a missed-lunch alert. Get the patient id from `GET /patients` as Dr. Lee.
 
+## Deploy (free tiers, for a demo)
+
+Three URLs, none of which need your laptop: the API on [Render](https://render.com) free, both clients on
+[Vercel](https://vercel.com) hobby, and the database on [MongoDB Atlas](https://www.mongodb.com/atlas) M0.
+The API has to be a long-running process (the alert checks and the demo simulator are background threads), so
+a serverless host will not do.
+
+### 1. Database
+
+Create a free **M0** cluster, add a database user, allow `0.0.0.0/0` under Network Access (a free PaaS has no
+fixed egress IP), and copy the `mongodb+srv://` URI.
+
+### 2. API
+
+Render → **New → Blueprint** on this repo picks up [`render.yaml`](render.yaml); or create a Web Service by
+hand with root directory `server`, build `pip install -r requirements.txt`, start
+`uvicorn app.main:app --host 0.0.0.0 --port $PORT` (Render assigns the port — binding 8000 makes the service
+unreachable). Set `MONGO_URI`, `JWT_SECRET` and `ANTHROPIC_API_KEY` in the dashboard, never in the repo.
+Check `https://<service>.onrender.com/health`.
+
+Then seed the cloud database once, from your machine:
+
+```bash
+cd server && MONGO_URI='mongodb+srv://…' MONGO_DB=dotty .venv/bin/python -m scripts.seed
+```
+
+The free instance sleeps after 15 minutes idle and takes ~40 s to wake, so point a free uptime pinger at
+`/health` every 10 minutes during the event, and open the portal a couple of minutes before demoing.
+
+### 3. Clinician portal
+
+Vercel → import the repo → root directory `heavy-client` → set `VITE_API_URL=https://<service>.onrender.com`.
+Vite bakes that in at build time, so changing it later needs a redeploy.
+[`heavy-client/vercel.json`](heavy-client/vercel.json) keeps deep links working.
+
+### 4. Family app
+
+A second Vercel project with root directory `light-client` and `EXPO_PUBLIC_API_URL=https://<service>.onrender.com`
+exports the Expo app for the browser, so judges can open it on their own phone.
+[`light-client/vercel.json`](light-client/vercel.json) has the build command. Exporting by hand needs the same
+variable **and** `--clear`, or Metro's cache silently ships a bundle that still points at localhost:
+
+```bash
+cd light-client && EXPO_PUBLIC_API_URL=https://<service>.onrender.com npx expo export -p web --clear
+```
+
+For the native version on your own phone, `EXPO_PUBLIC_API_URL=… npx expo start --tunnel` and scan with Expo
+Go. The app's Settings → Server settings field overrides the address at runtime, which is the fastest fallback
+if the deployed API is ever unreachable mid-demo.
+
 ## Tests
 
 ```bash
