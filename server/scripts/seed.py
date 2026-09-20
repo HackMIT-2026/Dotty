@@ -96,7 +96,7 @@ def build_history(patient_id: str, at: datetime, rng: random.Random) -> list[dic
             units = round_half(carbs / 10)  # parents follow the plan's 1:10
             meals.append((ts, carbs * resistance))
             boluses.append((ts + timedelta(minutes=2), units))
-            out.append(_event(patient_id, "meal", ts, {"carbs_g": carbs, "items": []}))
+            out.append(_event(patient_id, "meal", ts, {"carbs_g": carbs, "items": [], "carbs_source": "parent"}))
             out.append(_event(patient_id, "bolus", ts + timedelta(minutes=2), {"units": units, "reason": "meal", "carbs_g": carbs}, "parent"))
         if rng.random() < 0.7:
             ts, minutes = t("16:30", 45), rng.choice([30, 45, 60])
