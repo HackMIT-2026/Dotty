@@ -1,6 +1,6 @@
-# Dotty
+# Dotty: Developer Guide
 
-A Tamagotchi-style companion that turns Type 1 diabetes care into looking after a pet. The clinician sets a daily care plan; the child sees it as Dotty's quests and earns Dots for doing it; the parent sees the medical detail, what was done or missed, and the alerts. See [PLAN.md](PLAN.md) for the full design.
+A Tamagotchi-style companion app that turns Type 1 diabetes care into looking after a pet. The clinician sets a daily care plan; the child sees it as Dotty's quests and earns Dots for doing it; the parent sees the medical detail, what was done or missed, and the alerts.
 
 | Folder | What | Stack |
 | --- | --- | --- |
