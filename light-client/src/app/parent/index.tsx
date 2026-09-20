@@ -11,7 +11,7 @@ import { PageHeader } from '@/components/page-header';
 import { Body, Button, Card, Chip, H2, ProgressBar, Row, Screen, Small } from '@/components/ui';
 import { C, R, S, font } from '@/constants/theme';
 import { api, errorText } from '@/lib/api';
-import { MOOD_MESSAGES, bgOf, eventTitle, insulinToday, lastReading, moodFor, ofType, timeInRange, todaysEvents, trend } from '@/lib/derive';
+import { bgOf, dottyState, eventTitle, insulinToday, lastReading, ofType, timeInRange, todaysEvents, trend } from '@/lib/derive';
 import { DEFAULT_EQUIPPED } from '@/lib/pet';
 import { useStore } from '@/lib/store';
 import { planToday } from '@/lib/tasks';
@@ -79,7 +79,7 @@ export default function ParentHome() {
   const active = today.filter((e) => e.type === 'activity').reduce((s, e) => s + (e.data.minutes ?? 0), 0);
   const checks = today.filter((e) => e.type === 'reading').length;
   const carePlan = planToday(tasks, events, now);
-  const mood = moodFor(last, now, carePlan.items.some((i) => i.status === 'missed'));
+  const { message } = dottyState(events, now, carePlan.items.some((i) => i.status === 'missed'));
   const latestNote = notifications.find((n) => n.kind === 'clinician_note');
   const recent = [...events].reverse().filter((e) => e.type !== 'pet').slice(0, 8);
   const markers = events.filter(
@@ -123,13 +123,13 @@ export default function ParentHome() {
       <Card>
         <Row style={{ gap: S.md }}>
           <View style={{ marginVertical: -10, marginLeft: -6 }}>
-            <Dotty equipped={pet?.equipped ?? DEFAULT_EQUIPPED} mood={mood} size={112} />
+            <Dotty equipped={pet?.equipped ?? DEFAULT_EQUIPPED} mood="bouncy" size={112} bounce="gentle" muteCheer />
           </View>
           <View style={{ flex: 1, gap: 6 }}>
             <H2>
               {pet?.name ?? 'Dotty'} · Level {pet?.level ?? 1}
             </H2>
-            <Small color={C.ink}>“{MOOD_MESSAGES[mood]}”</Small>
+            <Small color={C.ink}>“{message}”</Small>
             <Row style={{ flexWrap: 'wrap', gap: 6 }}>
               <View style={styles.chip}>
                 <DotCoin size={18} />

@@ -8,10 +8,11 @@ import { SettingsButton } from '@/components/page-header';
 import { SoundButton } from '@/components/sound-button';
 import { SceneBackdrop } from '@/components/pet/scene';
 import { SpeechBubble } from '@/components/speech-bubble';
+import { StreakCalendar } from '@/components/streak-calendar';
 import { SyncBadge } from '@/components/sync-badge';
-import { Card, H2, ProgressBar, Row, Screen, Small } from '@/components/ui';
+import { Card, ProgressBar, Row, Screen, Small } from '@/components/ui';
 import { BORDER, C, MAX_WIDTH, R, S, font, shadow } from '@/constants/theme';
-import { MOOD_MESSAGES, computeQuests, lastReading, moodFor, needs } from '@/lib/derive';
+import { computeQuests, dottyState, needs } from '@/lib/derive';
 import { CARE_ACTIONS, DEFAULT_EQUIPPED } from '@/lib/pet';
 import { playSfx } from '@/lib/sounds';
 import { useStore } from '@/lib/store';
@@ -30,6 +31,12 @@ function Meter({ image, label, value, color }: { image: ImageSourcePropType; lab
   );
 }
 
+/** Space under the speech bubble: small, but enough that a hat does not poke into it. */
+function hatGap(hat: string | null): number {
+  if (!hat) return 8;
+  return ['hat_party', 'hat_crown', 'hat_wizard'].includes(hat) ? 54 : 30;
+}
+
 export default function ChildHome() {
   const insets = useSafeAreaInsets();
   const { height } = useWindowDimensions();
@@ -38,11 +45,10 @@ export default function ChildHome() {
   const events = useStore((s) => s.events);
   const cheer = useStore((s) => s.cheer);
   const tasks = useStore((s) => s.tasks);
-  const name = useStore((s) => s.session?.user.name);
 
   const today = planToday(tasks, events, now);
   const plan = childPlan(today.items);
-  const mood = moodFor(lastReading(events), now, today.items.some((i) => i.status === 'missed'));
+  const { mood, message, celebrate } = dottyState(events, now, today.items.some((i) => i.status === 'missed'));
   const need = needs(events, now, tasks);
   const habits = computeQuests(events, now, tasks.some((t) => t.kind === 'check'));
   const quests = plan.total > 0 ? { done: plan.done, total: plan.total, label: "Dotty's big quests" } : { done: habits.filter((q) => q.done).length, total: habits.length, label: "Today's quests" };
@@ -68,25 +74,19 @@ export default function ChildHome() {
                 <SettingsButton />
               </Row>
             </View>
-            <SpeechBubble text={MOOD_MESSAGES[mood]} />
-            <Dotty equipped={equipped} mood={mood} size={230} cheer={cheer} />
+            <SpeechBubble text={message} gap={hatGap(equipped.hat)} />
+            <Dotty equipped={equipped} mood={mood} size={230} cheer={cheer} celebrate={celebrate} muteCheer={!celebrate && (mood === 'shaky' || mood === 'sluggish')} />
           </View>
 
           <View style={styles.body}>
             <Card tint={C.glass} style={styles.glassCard}>
-              <Row style={{ justifyContent: 'space-between' }}>
-                <View style={{ flexShrink: 1 }}>
-                  <H2>{pet?.name ?? 'Dotty'}</H2>
-                  <Small>
-                    Hi {name ?? 'friend'}! Level {pet?.level ?? 1}
-                  </Small>
-                </View>
-                <View style={styles.streak}>
-                  <Icon name="fire" size={18} color="#E8590C" />
-                  <Text style={styles.streakText}>{pet?.streak_days ?? 0} day streak</Text>
-                </View>
-              </Row>
-              <ProgressBar value={pet ? pet.level_progress / pet.dots_per_level : 0} color={C.sun} height={14} />
+              <StreakCalendar
+                events={events}
+                now={now}
+                streak={pet?.streak_days ?? 0}
+                level={pet?.level ?? 1}
+                levelProgress={pet ? pet.level_progress / pet.dots_per_level : 0}
+              />
             </Card>
 
             <Card tint={C.glass} style={styles.glassCard}>
@@ -148,8 +148,6 @@ const styles = StyleSheet.create({
   dotsText: { ...font('900'), fontSize: 17, color: C.ink },
   body: { padding: S.md, gap: S.md, width: '100%', paddingBottom: S.xl },
   glassCard: { borderColor: C.glassLine, borderRadius: R.lg },
-  streak: { flexDirection: 'row', alignItems: 'center', gap: 4, backgroundColor: C.sunSoft, borderRadius: R.pill, paddingHorizontal: 12, paddingVertical: 6 },
-  streakText: { ...font('800'), fontSize: 14, color: '#B7791F' },
   goalsText: { ...font('800'), fontSize: 17, color: C.primaryDark, flexShrink: 1 },
   meterIcon: { width: 28, height: 28 },
   trophy: { width: 32, height: 32 },

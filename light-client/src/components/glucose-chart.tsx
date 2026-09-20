@@ -109,7 +109,7 @@ export function GlucoseChart({ readings, hours, now, low, high, height = 190, ma
 }
 
 const styles = StyleSheet.create({
-  legend: { flexDirection: 'row', justifyContent: 'center', gap: 14, marginTop: 2 },
+  legend: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'center', columnGap: 14, rowGap: 4, marginTop: 2 },
   legendItem: { flexDirection: 'row', alignItems: 'center', gap: 5 },
   legendText: { ...font('700'), fontSize: 12, color: C.inkSoft },
 });

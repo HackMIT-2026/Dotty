@@ -1,5 +1,9 @@
 """A child can tap a button twenty times. None of it should buy hats or reach the doctor's chart."""
 
+from datetime import datetime, timezone
+
+import pytest
+
 from app import db
 from app.services import gamification
 
@@ -28,6 +32,10 @@ def test_different_values_typed_seconds_apart_are_still_spam(client, family):
 
 def test_a_days_worth_of_meals_has_a_limit(client, family):
     """Ten different meals in one evening, half an hour apart: believable one at a time, not as a day."""
+    now = datetime.now(timezone.utc).astimezone(gamification.zone("America/New_York"))
+    if now.hour * 60 + now.minute < 9 * 30 + 5:
+        # the first meal is 4.5 hours ago; before about 04:35 local it falls on yesterday, so it is not "a day's" meals
+        pytest.skip("too early in the local day for ten meals 30 minutes apart to fall on the same day")
     foods = ["apple", "pizza", "rice", "milk", "cookie", "bread", "pear", "juice", "burger", "fries"]
     meals = [make_event("meal", {"items": [{"id": f}]}, minutes_ago=30 * i) for i, f in enumerate(foods)]
     push(client, family["child"], *meals)
