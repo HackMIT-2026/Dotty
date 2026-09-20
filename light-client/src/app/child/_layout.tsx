@@ -1,15 +1,15 @@
 import { Tabs } from 'expo-router/js-tabs';
 
-import { tabIcon, tabScreenOptions } from '@/components/tab-icon';
+import { childTabScreenOptions, imageTabIcon } from '@/components/tab-icon';
 import { C } from '@/constants/theme';
 
 export default function ChildTabs() {
   return (
-    <Tabs screenOptions={tabScreenOptions(C.primary)}>
-      <Tabs.Screen name="index" options={{ title: 'Dotty', tabBarIcon: tabIcon('home-heart', 'home-outline') }} />
-      <Tabs.Screen name="log" options={{ title: 'Care', tabBarIcon: tabIcon('heart', 'heart-outline') }} />
-      <Tabs.Screen name="quests" options={{ title: 'Quests', tabBarIcon: tabIcon('trophy', 'trophy-outline') }} />
-      <Tabs.Screen name="shop" options={{ title: 'Shop', tabBarIcon: tabIcon('shopping', 'shopping-outline') }} />
+    <Tabs screenOptions={childTabScreenOptions(C.primary)}>
+      <Tabs.Screen name="index" options={{ title: 'Dotty', tabBarIcon: imageTabIcon(require('@/assets/icons/dotty.png')) }} />
+      <Tabs.Screen name="log" options={{ title: 'Care', tabBarIcon: imageTabIcon(require('@/assets/icons/care.png')) }} />
+      <Tabs.Screen name="quests" options={{ title: 'Quests', tabBarIcon: imageTabIcon(require('@/assets/icons/quest.png')) }} />
+      <Tabs.Screen name="shop" options={{ title: 'Shop', tabBarIcon: imageTabIcon(require('@/assets/icons/home.png')) }} />
     </Tabs>
   );
 }

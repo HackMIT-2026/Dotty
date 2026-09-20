@@ -25,6 +25,15 @@ export const C = {
   sun: '#F5C26B', // sunny amber: gentle attention, with a clock icon
   sunInk: '#96651B',
   sunSoft: '#FDF3E3',
+  sand: '#F3DFB4', // the sand in the kid's pond scene: the child tab bar
+  glass: 'rgba(255, 255, 255, 0.82)', // frosted white panels over the scene
+  glassLine: 'rgba(255, 255, 255, 0.9)',
+  // the darker bottom edge that gives buttons their little "block" look
+  primaryEdge: '#D9736B',
+  sunEdge: '#D6A24E',
+  mintEdge: '#7DC2A3',
+  lavenderEdge: '#9C8BD6',
+  sandEdge: '#DEC48E',
   pink: '#E56B8A',
   pinkSoft: '#FBE7EC',
   // status colors are only used in the parent and clinician views: the child UI never shows red

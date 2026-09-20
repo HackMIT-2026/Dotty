@@ -1,6 +1,6 @@
 import { router, useLocalSearchParams } from 'expo-router';
 import { useEffect, useState } from 'react';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { Image, Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { Icon, IconTile, type IconName } from '@/components/icon';
 import { PageHeader } from '@/components/page-header';
@@ -208,7 +208,7 @@ export default function Log() {
             key={m.mode}
             onPress={() => setMode(m.mode)}
             style={[styles.mode, { backgroundColor: m.tint }, mode === m.mode && { borderColor: m.color }]}>
-            <Icon name={m.icon} size={28} color={m.color} />
+            <Image source={m.image} style={{ width: 40, height: 40 }} resizeMode="contain" />
             <Text style={styles.modeText}>{m.label}</Text>
           </Pressable>
         ))}

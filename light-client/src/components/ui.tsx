@@ -101,12 +101,15 @@ interface ButtonProps {
 }
 
 const VARIANTS = {
-  primary: { bg: C.primary, fg: C.ink },
-  sun: { bg: C.sun, fg: C.ink },
-  mint: { bg: C.mint, fg: C.ink },
-  secondary: { bg: C.lavender, fg: C.ink },
-  ghost: { bg: 'transparent', fg: C.primaryDark },
+  primary: { bg: C.primary, fg: C.ink, edge: C.primaryEdge },
+  sun: { bg: C.sun, fg: C.ink, edge: C.sunEdge },
+  mint: { bg: C.mint, fg: C.ink, edge: C.mintEdge },
+  secondary: { bg: C.lavender, fg: C.ink, edge: C.lavenderEdge },
+  ghost: { bg: 'transparent', fg: C.primaryDark, edge: null },
 } as const;
+
+/** Buttons sit on a thicker, darker bottom edge, like a little block, and press down into it. */
+const EDGE = 4;
 
 export function Button({ title, onPress, variant = 'primary', size = 'md', disabled, loading, icon, leading, style }: ButtonProps) {
   const v = VARIANTS[variant];
@@ -120,8 +123,9 @@ export function Button({ title, onPress, variant = 'primary', size = 'md', disab
         styles.button,
         size === 'lg' && styles.buttonLg,
         { backgroundColor: v.bg },
+        v.edge && { borderBottomWidth: EDGE, borderBottomColor: v.edge },
         (disabled || loading) && { opacity: 0.5 },
-        pressed && { transform: [{ scale: 0.97 }] },
+        pressed && (v.edge ? { transform: [{ translateY: EDGE / 2 }], borderBottomWidth: EDGE / 2 } : { transform: [{ scale: 0.97 }] }),
         style,
       ]}>
       {loading ? (

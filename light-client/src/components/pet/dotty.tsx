@@ -5,7 +5,6 @@
  * Each pose has its own anchor (where the head sits in that image), so a hat lands correctly whether Pip is
  * sitting, curious or asleep. Anchors are fractions of the image, measured from the artwork.
  */
-import { Image } from 'expo-image';
 import { useEffect, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 import Animated, {
@@ -21,13 +20,19 @@ import Svg, { Circle, Ellipse, G, Path, Polygon, Rect } from 'react-native-svg';
 
 import type { Mood, Pet } from '@/lib/types';
 
+import { PoseArtView } from './pose-art-view';
+
 type Equipped = Pet['equipped'];
 
+/**
+ * Where the head sits in each pose's picture, as fractions of it (for hats and accessories). The pictures and their
+ * animated pieces (tail frames, mouth, expression marks) are in pose-art.ts, cut from assets/pet/*.png by scripts/pet_frames.py.
+ */
 const POSES = {
-  happy: { src: require('@/assets/pet/happy.png'), aspect: 540 / 493, head: { cx: 0.51, top: 0.085, w: 0.45 } },
-  curious: { src: require('@/assets/pet/curious.png'), aspect: 566 / 484, head: { cx: 0.47, top: 0.095, w: 0.53 } },
-  cheering: { src: require('@/assets/pet/cheering.png'), aspect: 652 / 465, head: { cx: 0.49, top: 0.03, w: 0.44 } },
-  sleepy: { src: require('@/assets/pet/sleepy.png'), aspect: 1448 / 1086, head: { cx: 0.43, top: 0.32, w: 0.46 } },
+  happy: { aspect: 540 / 493, head: { cx: 0.51, top: 0.085, w: 0.45 } },
+  curious: { aspect: 566 / 484, head: { cx: 0.47, top: 0.095, w: 0.53 } },
+  cheering: { aspect: 1174 / 976, head: { cx: 0.49, top: 0.08, w: 0.49 } },
+  sleepy: { aspect: 1448 / 1086, head: { cx: 0.43, top: 0.32, w: 0.46 } },
 } as const;
 
 type PoseName = keyof typeof POSES;
@@ -192,7 +197,8 @@ export function Dotty({ equipped, mood = 'bouncy', size = 220, cheer = 0, animat
     transform: [{ translateY: bob.value + jump.value }, { scaleY: squish.value }, { scaleX: 2 - squish.value }],
   }));
 
-  const pose = POSES[cheering ? 'cheering' : MOOD_POSE[mood]];
+  const poseName = cheering ? 'cheering' : MOOD_POSE[mood];
+  const pose = POSES[poseName];
   const glow = BODY_COLORS[equipped.color] ?? BODY_COLORS.color_sky;
 
   // the artwork is laid out inside a square stage, so the anchors below map straight onto it
@@ -215,7 +221,9 @@ export function Dotty({ equipped, mood = 'bouncy', size = 220, cheer = 0, animat
           { top: imgTop + imgH * 0.28, left: imgW * 0.18, width: imgW * 0.64, height: imgH * 0.56, backgroundColor: glow.fill },
         ]}
       />
-      <Image source={pose.src} style={{ width: imgW, height: imgH, marginTop: imgTop }} contentFit="contain" transition={200} />
+      <View style={{ marginTop: imgTop, width: imgW, height: imgH }}>
+        <PoseArtView key={poseName} pose={poseName} width={imgW} height={imgH} animate={animated} />
+      </View>
 
       {equipped.accessory ? (
         <View style={[styles.layer, { left: headCx - accessoryW / 2, top: accessoryTop, width: accessoryW, height: accessoryW }]}>
