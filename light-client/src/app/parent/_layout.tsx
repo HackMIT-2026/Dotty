@@ -2,7 +2,7 @@ import { Tabs } from 'expo-router/js-tabs';
 
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { childBar, childTabScreenOptions, parentTabIcon } from '@/components/tab-icon';
+import { childBar, childTabScreenOptions, parentTabIcon, tabIcon } from '@/components/tab-icon';
 import { C } from '@/constants/theme';
 import { unreadCount, useStore } from '@/lib/store';
 

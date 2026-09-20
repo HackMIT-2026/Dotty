@@ -1,7 +1,7 @@
 import { Modal, Pressable, StyleSheet, View } from 'react-native';
 import { useState } from 'react';
 
-import { Icon, IconTile, type IconName } from '@/components/icon';
+import { Icon, IconTile } from '@/components/icon';
 import { PageHeader } from '@/components/page-header';
 import { Body, Button, Card, Field, Row, Screen, Small } from '@/components/ui';
 import { C, S, font } from '@/constants/theme';
@@ -12,14 +12,17 @@ import { timeAgo, useNow } from '@/lib/time';
 import type { AppNotification } from '@/lib/types';
 import { ParentIcon, type ParentIconName } from '@/components/parent-icon';
 
-const KIND: Record<AppNotification['kind'], { icon: IconName; color: string; tint: string }> = {
-  clinician_note: { icon: 'doctor', color: C.primary, tint: C.primarySoft },
-  parent_note: { icon: 'message-text-outline', color: C.mint, tint: C.mintSoft },
-  missed_treatment: { icon: 'clock-alert-outline', color: '#B7791F', tint: C.sunSoft },
-  care_summary: { icon: 'clipboard-check-outline', color: C.primary, tint: C.primarySoft },
-  out_of_range: { icon: 'water-alert', color: C.danger, tint: C.dangerSoft },
-  reward: { icon: 'star-four-points', color: C.mint, tint: C.mintSoft },
-  high_five: { icon: 'hand-clap', color: C.mint, tint: C.mintSoft },
+const KIND: Record<AppNotification['kind'], { sticker: ParentIconName }> = {
+  clinician_note: { sticker: 'doctor' },
+  parent_note: { sticker: 'info' },
+  missed_treatment: { sticker: 'clock-alert' },
+  care_summary: { sticker: 'clipboard' },
+  out_of_range: { sticker: 'drop-alert' },
+  reward: { sticker: 'star' },
+  high_five: { sticker: 'clap' },
+  food_help: { sticker: 'meal' },
+  data_check: { sticker: 'alert' },
+  help_answered: { sticker: 'check' },
 };
 
 /**
