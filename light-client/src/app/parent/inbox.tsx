@@ -1,6 +1,5 @@
 import { Pressable, StyleSheet, View } from 'react-native';
 
-import { IconTile, type IconName } from '@/components/icon';
 import { PageHeader } from '@/components/page-header';
 import { Body, Button, Card, Row, Screen, Small } from '@/components/ui';
 import { C, S, font } from '@/constants/theme';
@@ -9,14 +8,15 @@ import { unreadCount, useStore } from '@/lib/store';
 import { syncNow } from '@/lib/sync';
 import { timeAgo, useNow } from '@/lib/time';
 import type { AppNotification } from '@/lib/types';
+import { ParentIcon, type ParentIconName } from '@/components/parent-icon';
 
-const KIND: Record<AppNotification['kind'], { icon: IconName; color: string; tint: string }> = {
-  clinician_note: { icon: 'doctor', color: C.primary, tint: C.primarySoft },
-  missed_treatment: { icon: 'clock-alert-outline', color: '#B7791F', tint: C.sunSoft },
-  care_summary: { icon: 'clipboard-check-outline', color: C.primary, tint: C.primarySoft },
-  out_of_range: { icon: 'water-alert', color: C.danger, tint: C.dangerSoft },
-  reward: { icon: 'star-four-points', color: C.mint, tint: C.mintSoft },
-  high_five: { icon: 'hand-clap', color: C.mint, tint: C.mintSoft },
+const KIND: Record<AppNotification['kind'], { sticker: ParentIconName; color: string; tint: string }> = {
+  clinician_note: { sticker: 'doctor' as ParentIconName, color: C.primary, tint: C.primarySoft },
+  missed_treatment: { sticker: 'clock-alert' as ParentIconName, color: '#B7791F', tint: C.sunSoft },
+  care_summary: { sticker: 'clipboard' as ParentIconName, color: C.primary, tint: C.primarySoft },
+  out_of_range: { sticker: 'drop-alert' as ParentIconName, color: C.danger, tint: C.dangerSoft },
+  reward: { sticker: 'star' as ParentIconName, color: C.mint, tint: C.mintSoft },
+  high_five: { sticker: 'clap' as ParentIconName, color: C.mint, tint: C.mintSoft },
 };
 
 export default function Inbox() {
@@ -39,12 +39,12 @@ export default function Inbox() {
   }
 
   return (
-    <Screen refreshing={syncing} onRefresh={() => void syncNow()}>
+    <Screen background={C.pageInbox} refreshing={syncing} onRefresh={() => void syncNow()}>
       <PageHeader title="Inbox" />
       {unread > 0 && (
         <Row style={{ justifyContent: 'space-between' }}>
-          <Small>{unread} unread</Small>
-          <Button title="Mark all read" icon="check-all" variant="ghost" onPress={readAll} />
+          <Small color={C.ink}>{unread} unread</Small>
+          <Button title="Mark all read" leading={<ParentIcon name="check-all" size={26} />} variant="ghost" onPress={readAll} />
         </Row>
       )}
       {notifications.length === 0 ? (
@@ -58,7 +58,7 @@ export default function Inbox() {
           <Pressable key={n.id} onPress={() => open(n)}>
             <Card style={!n.read_at ? styles.unread : undefined}>
               <Row style={{ alignItems: 'flex-start' }}>
-                <IconTile name={k.icon} color={k.color} tint={k.tint} size={42} />
+                <ParentIcon name={k.sticker} size={46} />
                 <View style={{ flex: 1, gap: 2 }}>
                   <Row style={{ justifyContent: 'space-between' }}>
                     <Body style={[font(n.read_at ? '700' : '900'), { flex: 1 }]}>{n.title}</Body>

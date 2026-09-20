@@ -2,11 +2,11 @@ import { router } from 'expo-router';
 import type { ReactNode } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
 
-import { C, R, S, shadow } from '@/constants/theme';
+import { R, S, shadow } from '@/constants/theme';
 
-import { Icon } from './icon';
 import { SyncBadge } from './sync-badge';
 import { H1 } from './ui';
+import { ParentIcon } from './parent-icon';
 
 /** The gear that opens Settings. Shown in the same top-right spot on every signed-in screen. */
 export function SettingsButton() {
@@ -17,7 +17,7 @@ export function SettingsButton() {
       accessibilityLabel="Settings"
       hitSlop={8}
       style={({ pressed }) => [styles.gear, pressed && { transform: [{ scale: 0.92 }] }]}>
-      <Icon name="cog" size={21} color={C.inkSoft} />
+      <ParentIcon name="settings" size={26} />
     </Pressable>
   );
 }

@@ -1,7 +1,6 @@
 import { useState } from 'react';
 import { Switch, Text, View } from 'react-native';
 
-import { Icon } from '@/components/icon';
 import { PIN_LENGTH, PinPad } from '@/components/pin-pad';
 import { ServerField } from '@/components/server-field';
 import { GlucoseUnitToggle } from '@/components/unit-toggle';
@@ -11,6 +10,7 @@ import { api, errorText } from '@/lib/api';
 import { useStore } from '@/lib/store';
 import { syncNow } from '@/lib/sync';
 import { fmtBg, useGlucoseUnit } from '@/lib/units';
+import { ParentIcon } from '@/components/parent-icon';
 
 /** Parents change the unit here or on the Today page; children only see which unit is used. */
 function GlucoseUnitCard({ isParent }: { isParent: boolean }) {
@@ -28,8 +28,8 @@ function GlucoseUnitCard({ isParent }: { isParent: boolean }) {
         </>
       ) : (
         <Row>
-          <Icon name="lock-outline" size={18} color={C.inkSoft} />
-          <Small style={{ flex: 1 }}>Glucose is shown in {unit}. Only your grown-up can change this.</Small>
+          <ParentIcon name="lock" size={24} />
+          <Small style={{ flex: 1 }}>Glucose is shown in {unit}. Only your parent can change this.</Small>
         </Row>
       )}
     </Card>
@@ -66,11 +66,11 @@ function ChildPinCard({ childName }: { childName: string }) {
           <PinPad value={pin} onChange={setPin} />
           <Row>
             <Button title="Cancel" variant="ghost" onPress={() => { setOpen(false); setPin(''); }} />
-            <Button title="Save number" icon="check-bold" onPress={save} loading={busy} disabled={pin.length < PIN_LENGTH} />
+            <Button title="Save number" leading={<ParentIcon name="check" size={26} />} onPress={save} loading={busy} disabled={pin.length < PIN_LENGTH} />
           </Row>
         </>
       ) : (
-        <Button title="Set a new secret number" icon="lock-reset" variant="secondary" onPress={() => setOpen(true)} />
+        <Button title="Set a new secret number" leading={<ParentIcon name="lock" size={26} />} variant="secondary" onPress={() => setOpen(true)} />
       )}
     </Card>
   );

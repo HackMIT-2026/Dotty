@@ -21,7 +21,7 @@ from app.services.simulator import glucose_model
 from app.util import at_local, new_id, now, zone
 
 FAMILY_CODE = "DEMO42"
-PASSWORD = "demo1234"  # grown-ups
+PASSWORD = "demo1234"  # parents and clinicians
 CHILD_PIN = "1234"  # the child signs in with the family code + this PIN, never an email
 TZ = "America/New_York"
 HISTORY_DAYS = 14

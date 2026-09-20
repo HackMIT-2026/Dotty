@@ -11,7 +11,7 @@ import { C, R, S } from '@/constants/theme';
 import { NetworkError, authErrorText } from '@/lib/api';
 import { childLogin, login } from '@/lib/session';
 
-type Mode = 'kid' | 'grownup';
+type Mode = 'kid' | 'parent';
 
 const DEMO_FAMILY = 'DEMO42';
 const DEMO_PIN = '1234';
@@ -44,7 +44,7 @@ export default function Login() {
     }
   }
 
-  async function submitGrownUp(e = email, p = password, key = 'form') {
+  async function submitParent(e = email, p = password, key = 'form') {
     setBusy(key);
     setError(null);
     try {
@@ -75,14 +75,14 @@ export default function Login() {
 
       <Row style={{ justifyContent: 'center' }}>
         <Chip label="I'm a kid" icon="human-child" art={<Image source={require('@/assets/icons/baby.png')} style={styles.roleIcon} resizeMode="contain" />} selected={mode === 'kid'} onPress={() => { setMode('kid'); setError(null); }} />
-        <Chip label="I'm the parent" icon="account-heart" art={<Image source={require('@/assets/icons/old.png')} style={styles.roleIcon} resizeMode="contain" />} selected={mode === 'grownup'} onPress={() => { setMode('grownup'); setError(null); }} />
+        <Chip label="I'm the parent" icon="account-heart" art={<Image source={require('@/assets/icons/old.png')} style={styles.roleIcon} resizeMode="contain" />} selected={mode === 'parent'} onPress={() => { setMode('parent'); setError(null); }} />
       </Row>
 
       {mode === 'kid' ? (
         <Card>
           <H2>Hi! What&apos;s your family code?</H2>
           <Field
-            label="Family code (ask your grown-up)"
+            label="Family code (ask your parent)"
             value={code}
             onChangeText={(v) => setCode(v.toUpperCase().slice(0, 6))}
             autoCapitalize="characters"
@@ -104,9 +104,9 @@ export default function Login() {
       ) : (
         <Card>
           <Field label="Email" value={email} onChangeText={setEmail} keyboardType="email-address" autoComplete="email" />
-          <Field label="Password" value={password} onChangeText={setPassword} secureTextEntry onSubmitEditing={() => submitGrownUp()} />
+          <Field label="Password" value={password} onChangeText={setPassword} secureTextEntry onSubmitEditing={() => submitParent()} />
           {error ? <Small color={C.danger}>{error}</Small> : null}
-          <Button title="Log in" onPress={() => submitGrownUp()} loading={busy === 'form'} disabled={!email || !password} />
+          <Button title="Log in" onPress={() => submitParent()} loading={busy === 'form'} disabled={!email || !password} />
         </Card>
       )}
 
@@ -137,8 +137,8 @@ export default function Login() {
             variant="sun"
             loading={busy === 'alex'}
             onPress={() => {
-              setMode('grownup');
-              void submitGrownUp('parent@dotty.demo', 'demo1234', 'alex');
+              setMode('parent');
+              void submitParent('parent@dotty.demo', 'demo1234', 'alex');
             }}
           />
         </Row>

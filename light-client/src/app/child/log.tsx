@@ -187,7 +187,7 @@ function Medicine() {
   return (
     <Card>
       <H2>Medicine time</H2>
-      <Body color={C.inkSoft}>Did you and your grown-up do your insulin? Tell Dotty!</Body>
+      <Body color={C.inkSoft}>Did you and your parent do your insulin? Tell Dotty!</Body>
       <Button title="I did my medicine" icon="water-check" size="lg" variant="mint" onPress={save} loading={busy} />
     </Card>
   );

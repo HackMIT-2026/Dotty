@@ -9,7 +9,7 @@ HHMM = r"^([01]\d|2[0-3]):[0-5]\d$"
 
 
 class RegisterIn(BaseModel):
-    """Grown-ups (parents, clinicians) sign up with an email. Children use ChildRegisterIn instead."""
+    """Parents and clinicians sign up with an email. Children use ChildRegisterIn instead."""
 
     name: str = Field(min_length=1, max_length=60)
     email: str = Field(min_length=3, max_length=120)

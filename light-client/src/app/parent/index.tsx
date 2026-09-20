@@ -2,23 +2,37 @@ import { router } from 'expo-router';
 import { useState } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 
+import { DotCoin } from '@/components/icon';
 import { GlucoseChart } from '@/components/glucose-chart';
-import { Icon, IconTile } from '@/components/icon';
+import { Dotty } from '@/components/pet/dotty';
 import { QuickLog } from '@/components/quick-log';
 import { GlucoseUnitToggle } from '@/components/unit-toggle';
 import { PageHeader } from '@/components/page-header';
 import { Body, Button, Card, Chip, H2, ProgressBar, Row, Screen, Small } from '@/components/ui';
 import { C, R, S, font } from '@/constants/theme';
 import { api, errorText } from '@/lib/api';
-import { EVENT_ICON, bgOf, eventTitle, lastReading, ofType, timeInRange, todaysEvents, trend } from '@/lib/derive';
+import { MOOD_MESSAGES, bgOf, eventTitle, lastReading, moodFor, ofType, timeInRange, todaysEvents, trend } from '@/lib/derive';
+import { DEFAULT_EQUIPPED } from '@/lib/pet';
 import { useStore } from '@/lib/store';
 import { planToday } from '@/lib/tasks';
 import { syncNow } from '@/lib/sync';
 import { timeAgo, useNow } from '@/lib/time';
-import type { Pet } from '@/lib/types';
+import type { DotEvent, Pet } from '@/lib/types';
 import { fmtBg, useGlucoseUnit } from '@/lib/units';
+import { ParentIcon, type ParentIconName } from '@/components/parent-icon';
 
-const TREND = { up: 'trending-up', down: 'trending-down', flat: 'trending-neutral' } as const;
+const TREND = { up: 'trend-up', down: 'trend-down', flat: 'trend-flat' } as const;
+
+/** A sticker for each kind of log in the Recent list. */
+const EVENT_STICKER: Record<DotEvent['type'], ParentIconName> = {
+  reading: 'glucose',
+  meal: 'meal',
+  activity: 'activity',
+  bolus: 'medicine',
+  basal: 'medicine',
+  pet: 'dotty',
+  task: 'star',
+};
 
 function bgColor(bg: number, low: number, high: number) {
   if (bg < low) return C.danger;
@@ -47,6 +61,7 @@ export default function ParentHome() {
   const pushToast = useStore((s) => s.pushToast);
   const unit = useGlucoseUnit();
   const tasks = useStore((s) => s.tasks);
+  const pet = useStore((s) => s.pet);
   const [hours, setHours] = useState(24);
   const [highFiving, setHighFiving] = useState(false);
 
@@ -64,13 +79,14 @@ export default function ParentHome() {
   const active = today.filter((e) => e.type === 'activity').reduce((s, e) => s + (e.data.minutes ?? 0), 0);
   const checks = today.filter((e) => e.type === 'reading').length;
   const carePlan = planToday(tasks, events, now);
+  const mood = moodFor(last, now, carePlan.items.some((i) => i.status === 'missed'));
   const latestNote = notifications.find((n) => n.kind === 'clinician_note');
   const recent = [...events].reverse().filter((e) => e.type !== 'pet').slice(0, 8);
   const markers = events.filter((e) => e.type === 'meal' || e.type === 'activity' || (e.type === 'bolus' && e.data.units != null));
 
   if (!family?.child) {
     return (
-      <Screen>
+      <Screen background={C.pageShop}>
         <PageHeader title="Welcome!" />
         <Card>
           <H2>Add your child</H2>
@@ -99,8 +115,32 @@ export default function ParentHome() {
   }
 
   return (
-    <Screen refreshing={syncing} onRefresh={() => void syncNow()}>
+    <Screen background={C.pageShop} refreshing={syncing} onRefresh={() => void syncNow()}>
       <PageHeader title={`${childName}'s day`} />
+
+      <Card>
+        <Row style={{ gap: S.md }}>
+          <View style={{ marginVertical: -10, marginLeft: -6 }}>
+            <Dotty equipped={pet?.equipped ?? DEFAULT_EQUIPPED} mood={mood} size={112} />
+          </View>
+          <View style={{ flex: 1, gap: 6 }}>
+            <H2>
+              {pet?.name ?? 'Dotty'} · Level {pet?.level ?? 1}
+            </H2>
+            <Small color={C.ink}>“{MOOD_MESSAGES[mood]}”</Small>
+            <Row style={{ flexWrap: 'wrap', gap: 6 }}>
+              <View style={styles.chip}>
+                <DotCoin size={18} />
+                <Text style={styles.chipText}>{pet?.dots ?? 0}</Text>
+              </View>
+              <View style={styles.chip}>
+                <ParentIcon name="fire" size={20} />
+                <Text style={styles.chipText}>{pet?.streak_days ?? 0} day streak</Text>
+              </View>
+            </Row>
+          </View>
+        </Row>
+      </Card>
 
       <Card>
         <Row style={{ justifyContent: 'space-between' }}>
@@ -114,7 +154,7 @@ export default function ParentHome() {
               <Row style={{ alignItems: 'baseline' }}>
                 <Text style={[styles.big, { color: bgColor(bgOf(last), low, high) }]}>{fmtBg(bgOf(last), unit, false)}</Text>
                 <Body color={C.inkSoft}>{unit}</Body>
-                {dir ? <Icon name={TREND[dir]} size={24} color={C.inkSoft} /> : null}
+                {dir ? <ParentIcon name={TREND[dir]} size={28} /> : null}
               </Row>
               {last.source === 'simulator' ? <Small>from the demo simulator</Small> : null}
             </View>
@@ -148,14 +188,14 @@ export default function ParentHome() {
           <Card tint={carePlan.done === carePlan.total ? C.mintSoft : undefined}>
             <Row style={{ justifyContent: 'space-between' }}>
               <Row style={{ gap: 6 }}>
-                <Icon name="clipboard-check-outline" size={18} color={C.primaryDark} />
+                <ParentIcon name="clipboard" size={26} />
                 <Small color={C.primaryDark}>Care plan today</Small>
               </Row>
               <Row style={{ gap: 2 }}>
                 <Small color={carePlan.items.some((i) => i.status === 'missed') ? C.danger : C.primaryDark}>
                   {carePlan.done}/{carePlan.total} done
                 </Small>
-                <Icon name="chevron-right" size={18} color={C.primaryDark} />
+                <ParentIcon name="chevron" size={20} />
               </Row>
             </Row>
             <ProgressBar value={carePlan.total ? carePlan.done / carePlan.total : 0} color={carePlan.done === carePlan.total ? C.mint : C.primary} />
@@ -163,13 +203,13 @@ export default function ParentHome() {
         </Pressable>
       ) : null}
 
-      <Button title={`Send ${childName} a high five`} icon="hand-clap" variant="sun" onPress={highFive} loading={highFiving} />
+      <Button title={`Send ${childName} a high five`} leading={<ParentIcon name="clap" size={30} />} variant="sun" onPress={highFive} loading={highFiving} />
 
       {latestNote ? (
         <Pressable onPress={() => router.navigate('/parent/inbox')}>
           <Card tint={C.primarySoft}>
             <Row style={{ gap: 6 }}>
-              <Icon name="doctor" size={18} color={C.primaryDark} />
+              <ParentIcon name="doctor" size={26} />
               <Small color={C.primaryDark}>
                 {latestNote.title} · {timeAgo(latestNote.created_at, now)}
               </Small>
@@ -189,9 +229,9 @@ export default function ParentHome() {
         {recent.length === 0 ? <Small>Nothing logged yet.</Small> : null}
         {recent.map((e) => (
           <Row key={e.client_id} style={styles.recent}>
-            <IconTile name={EVENT_ICON[e.type].icon} color={EVENT_ICON[e.type].color} tint={EVENT_ICON[e.type].tint} size={34} radius={R.sm} />
+            <ParentIcon name={EVENT_STICKER[e.type]} size={36} />
             <Body style={{ flex: 1 }}>{eventTitle(e, unit)}</Body>
-            {e.id ? null : <Icon name="cloud-upload" size={15} color={C.inkSoft} />}
+            {e.id ? null : <ParentIcon name="cloud-upload" size={20} />}
             <Small>{timeAgo(e.ts, now)}</Small>
           </Row>
         ))}
@@ -210,6 +250,8 @@ async function refreshFamily() {
 
 const styles = StyleSheet.create({
   big: { ...font('900'), fontSize: 52, lineHeight: 58 },
+  chip: { flexDirection: 'row', alignItems: 'center', gap: 5, backgroundColor: C.sunSoft, borderRadius: R.pill, paddingHorizontal: 10, paddingVertical: 4 },
+  chipText: { ...font('800'), fontSize: 13, color: C.ink },
   stats: { flexDirection: 'row', flexWrap: 'wrap', gap: S.sm },
   stat: { flexBasis: '30%', flexGrow: 1, backgroundColor: C.card, borderRadius: R.md, padding: S.sm, alignItems: 'center' },
   statValue: { ...font('800'), fontSize: 20, color: C.ink },
