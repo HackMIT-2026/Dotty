@@ -19,6 +19,8 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { BORDER, C, MAX_WIDTH, R, S, font, shadow } from '@/constants/theme';
 
+import { playSfx } from '@/lib/sounds';
+
 import { Icon, type IconName } from './icon';
 
 // ---------- text ----------
@@ -120,7 +122,10 @@ export function Button({ title, onPress, variant = 'primary', size = 'md', disab
   return (
     <Pressable
       accessibilityRole="button"
-      onPress={onPress}
+      onPress={() => {
+        playSfx('tap');
+        onPress();
+      }}
       disabled={disabled || loading}
       style={({ pressed }) => [
         styles.button,
@@ -146,7 +151,12 @@ export function Button({ title, onPress, variant = 'primary', size = 'md', disab
 export function Chip({ label, selected, onPress, icon, image, art }: { label: string; selected?: boolean; onPress: () => void; icon?: IconName; image?: ImageSourcePropType; art?: ReactNode }) {
   const fg = selected ? '#fff' : C.ink;
   return (
-    <Pressable onPress={onPress} style={({ pressed }) => [styles.chip, selected && styles.chipOn, pressed && { opacity: 0.8 }]}>
+    <Pressable
+      onPress={() => {
+        playSfx('select');
+        onPress();
+      }}
+      style={({ pressed }) => [styles.chip, selected && styles.chipOn, pressed && { opacity: 0.8 }]}>
       {art ? art : image ? <Image source={image} style={{ width: 26, height: 26 }} resizeMode="contain" /> : icon ? <Icon name={icon} size={17} color={selected ? '#fff' : C.primary} /> : null}
       <Text style={[t.small, { color: fg, fontSize: 14 }]}>{label}</Text>
     </Pressable>

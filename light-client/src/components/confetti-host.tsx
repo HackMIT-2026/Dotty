@@ -9,6 +9,7 @@ import { Platform, StyleSheet, Vibration, View, useWindowDimensions } from 'reac
 import Animated, { Easing, useAnimatedStyle, useReducedMotion, useSharedValue, withTiming, type SharedValue } from 'react-native-reanimated';
 
 import { C } from '@/constants/theme';
+import { playSfx } from '@/lib/sounds';
 import { useStore } from '@/lib/store';
 
 const PIECES = 40;
@@ -79,6 +80,7 @@ export function ConfettiHost() {
   useEffect(() => {
     if (trigger === 0) return;
     buzz();
+    playSfx('success');
     if (reduced) return;
     setBurst({ id: trigger, pieces: makePieces() });
     progress.value = 0;

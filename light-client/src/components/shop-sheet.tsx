@@ -8,6 +8,7 @@ import Animated, { Easing, useAnimatedStyle, useReducedMotion, useSharedValue, w
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { BORDER, C, MAX_WIDTH, R, S, font } from '@/constants/theme';
+import { playSfx } from '@/lib/sounds';
 import type { Slot } from '@/lib/types';
 
 
@@ -62,7 +63,10 @@ export function ShopSheet({ visible, onClose, onPick }: { visible: boolean; onCl
               <Pressable
                 key={c.slot}
                 accessibilityRole="button"
-                onPress={() => onPick(c.slot)}
+                onPress={() => {
+                  playSfx('select');
+                  onPick(c.slot);
+                }}
                 style={({ pressed }) => [styles.card, pressed && styles.cardPressed]}>
                 <Image source={c.image} style={styles.cardIcon} resizeMode="contain" />
                 <Text style={styles.cardText}>{c.label}</Text>

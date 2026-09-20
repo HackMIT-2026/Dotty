@@ -5,6 +5,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { DotCoin, Icon } from '@/components/icon';
 import { Dotty } from '@/components/pet/dotty';
 import { SettingsButton } from '@/components/page-header';
+import { SoundButton } from '@/components/sound-button';
 import { SceneBackdrop } from '@/components/pet/scene';
 import { SpeechBubble } from '@/components/speech-bubble';
 import { SyncBadge } from '@/components/sync-badge';
@@ -12,6 +13,7 @@ import { Card, H2, ProgressBar, Row, Screen, Small } from '@/components/ui';
 import { BORDER, C, MAX_WIDTH, R, S, font, shadow } from '@/constants/theme';
 import { MOOD_MESSAGES, computeQuests, lastReading, moodFor, needs } from '@/lib/derive';
 import { CARE_ACTIONS, DEFAULT_EQUIPPED } from '@/lib/pet';
+import { playSfx } from '@/lib/sounds';
 import { useStore } from '@/lib/store';
 import { childPlan, planToday } from '@/lib/tasks';
 import { useNow } from '@/lib/time';
@@ -62,6 +64,7 @@ export default function ChildHome() {
               </View>
               <Row>
                 <SyncBadge />
+                <SoundButton />
                 <SettingsButton />
               </Row>
             </View>
@@ -116,7 +119,10 @@ export default function ChildHome() {
               {CARE_ACTIONS.map((a) => (
                 <Pressable
                   key={a.mode}
-                  onPress={() => router.navigate({ pathname: '/child/log', params: { mode: a.mode } })}
+                  onPress={() => {
+                    playSfx('select');
+                    router.navigate({ pathname: '/child/log', params: { mode: a.mode } });
+                  }}
                   style={({ pressed }) => [styles.action, pressed && { transform: [{ scale: 0.98 }] }]}>
                   <Image source={a.image} style={styles.actionIcon} resizeMode="contain" />
                   <Text style={styles.actionText}>{a.label}</Text>
