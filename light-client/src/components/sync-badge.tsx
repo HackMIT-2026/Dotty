@@ -4,7 +4,7 @@ import { C, R, font } from '@/constants/theme';
 import { syncNow } from '@/lib/sync';
 import { useStore } from '@/lib/store';
 
-import { Icon, type IconName } from './icon';
+import { ParentIcon, type ParentIconName } from './parent-icon';
 
 /** The cloud badge: shows whether everything is saved, and how many logs are waiting for a connection. */
 export function SyncBadge() {
@@ -12,12 +12,12 @@ export function SyncBadge() {
   const syncing = useStore((s) => s.syncing);
   const pending = useStore((s) => s.outbox.length);
 
-  let icon: IconName = 'cloud-check';
+  let icon: ParentIconName = 'cloud-check';
   let label = 'Saved';
   let bg: string = C.mintSoft;
   let fg: string = '#1F9D74';
   if (!online) {
-    icon = 'cloud-off-outline';
+    icon = 'cloud-off';
     label = pending ? `Offline · ${pending} waiting` : 'Offline';
     bg = C.sunSoft;
     fg = '#B7791F';
@@ -33,7 +33,7 @@ export function SyncBadge() {
       onPress={() => void syncNow()}
       accessibilityLabel="Sync status"
       style={{ flexDirection: 'row', alignItems: 'center', gap: 5, backgroundColor: bg, borderRadius: R.pill, paddingHorizontal: 11, paddingVertical: 6 }}>
-      <Icon name={icon} size={16} color={fg} />
+      <ParentIcon name={icon} size={22} />
       <Text style={{ ...font('800'), fontSize: 13, color: fg }}>{label}</Text>
     </Pressable>
   );

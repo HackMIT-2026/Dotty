@@ -3,10 +3,16 @@ import { Image, type ColorValue, type ImageSourcePropType } from 'react-native';
 import { BORDER, C, F, R } from '@/constants/theme';
 
 import { Icon, type IconName } from './icon';
+import { ParentIcon, type ParentIconName } from './parent-icon';
 
 /** Tab bar icon: filled when selected, outline otherwise (both exist in Material Design Icons). */
 export function tabIcon(name: IconName, outline: IconName) {
   return ({ focused, color }: { focused: boolean; color: ColorValue }) => <Icon name={focused ? name : outline} size={26} color={color as string} />;
+}
+
+/** Tab bar icon for the parent screens, from the sticker set in parent-icon.tsx. */
+export function parentTabIcon(name: ParentIconName) {
+  return () => <ParentIcon name={name} size={34} />;
 }
 
 /** Tab bar icon drawn from a full-colour PNG with its white sticker outline. Not tinted. */

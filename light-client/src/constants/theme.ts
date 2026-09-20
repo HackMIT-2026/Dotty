@@ -31,6 +31,8 @@ export const C = {
   pageQuests: '#84D6CB',
   barQuests: '#9DE0D7',
   pageShop: '#7CC8F0',
+  pageInbox: '#CBBFF2',
+  barInbox: '#DBD1F7',
   barShop: '#98D5F5',
   sand: '#F3DFB4', // the sand in the kid's pond scene: the child tab bar
   glass: 'rgba(255, 255, 255, 0.82)', // frosted white panels over the scene

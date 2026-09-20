@@ -5,17 +5,18 @@ import { saveLog } from '@/lib/log-action';
 import { useStore } from '@/lib/store';
 import { parseBg, rangeHint, useGlucoseUnit } from '@/lib/units';
 
-import type { IconName } from './icon';
 import { Button, Chip, Field, Row, Small } from './ui';
+import { ParentIcon, type ParentIconName } from './parent-icon';
 
 type Kind = 'reading' | 'meal' | 'bolus' | 'basal' | 'activity';
 
-const KINDS: { id: Kind; label: string; icon: IconName; field: string; min: number; max: number }[] = [
-  { id: 'reading', label: 'Glucose', icon: 'water', field: 'mg/dL', min: 20, max: 600 },
-  { id: 'meal', label: 'Carbs', icon: 'silverware-fork-knife', field: 'grams of carbs', min: 1, max: 300 },
-  { id: 'bolus', label: 'Rapid', icon: 'needle', field: 'units of rapid insulin', min: 0.5, max: 100 },
-  { id: 'basal', label: 'Long-acting', icon: 'needle-off', field: 'units of long-acting insulin', min: 0.5, max: 100 },
-  { id: 'activity', label: 'Activity', icon: 'run', field: 'minutes', min: 1, max: 300 },
+// Rapid and long-acting are different medicines, so they are logged (and totalled) apart.
+const KINDS: { id: Kind; label: string; sticker: ParentIconName; field: string; min: number; max: number }[] = [
+  { id: 'reading', label: 'Glucose', sticker: 'glucose' as ParentIconName, field: 'mg/dL', min: 20, max: 600 },
+  { id: 'meal', label: 'Carbs', sticker: 'meal' as ParentIconName, field: 'grams of carbs', min: 1, max: 300 },
+  { id: 'bolus', label: 'Rapid', sticker: 'medicine' as ParentIconName, field: 'units of rapid insulin', min: 0.5, max: 100 },
+  { id: 'basal', label: 'Long-acting', sticker: 'medicine' as ParentIconName, field: 'units of long-acting insulin', min: 0.5, max: 100 },
+  { id: 'activity', label: 'Activity', sticker: 'activity' as ParentIconName, field: 'minutes', min: 1, max: 300 },
 ];
 
 /** Lets a parent log on the child's behalf. Goes through the same offline outbox as the child's logs. */
@@ -53,7 +54,7 @@ export function QuickLog() {
     <>
       <Row style={{ flexWrap: 'wrap' }}>
         {KINDS.map((x) => (
-          <Chip key={x.id} label={x.label} icon={x.icon} selected={kind === x.id} onPress={() => { setKind(x.id); setValue(''); }} />
+          <Chip key={x.id} label={x.label} art={<ParentIcon name={x.sticker} size={28} />} selected={kind === x.id} onPress={() => { setKind(x.id); setValue(''); }} />
         ))}
       </Row>
       <Field label={field} value={value} onChangeText={setValue} keyboardType="decimal-pad" placeholder="0" onSubmitEditing={() => valid && save()} />

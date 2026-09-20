@@ -64,7 +64,7 @@ export default function Join() {
           <H2>Join your family</H2>
           <Field label="Your first name" value={name} onChangeText={setName} autoCapitalize="words" placeholder="Maya" />
           <Field
-            label="Family code (ask your grown-up)"
+            label="Family code (ask your parent)"
             value={code}
             onChangeText={(v) => setCode(v.toUpperCase().slice(0, 6))}
             autoCapitalize="characters"
