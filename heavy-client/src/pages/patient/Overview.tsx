@@ -3,7 +3,7 @@ import { CartesianGrid, Line, LineChart, ReferenceArea, ResponsiveContainer, Sca
 
 import { Button, Card, Empty, H2, Pill, Stat } from '../../components/ui';
 import { api } from '../../lib/api';
-import { clock, dayLabel, timeAgo } from '../../lib/time';
+import { clock, dayLabel, localDate, timeAgo } from '../../lib/time';
 import type { DotEvent, Plan } from '../../lib/types';
 import { fmtBg, toUnit } from '../../lib/units';
 import { usePatient } from '../PatientLayout';
@@ -55,7 +55,7 @@ export default function Overview() {
         .map((e) => ({ t: new Date(e.ts).getTime(), y: toUnit(low, unit), type: e.type })),
     [events, low, unit],
   );
-  const today = events.filter((e) => new Date(e.ts).toDateString() === new Date().toDateString());
+  const today = events.filter((e) => localDate(e.ts) === localDate(Date.now()));
   const carbs = today.filter((e) => e.type === 'meal').reduce((s, e) => s + (e.data.carbs_g ?? 0), 0);
   const insulin = today.filter((e) => e.type === 'bolus' || e.type === 'basal').reduce((s, e) => s + (e.data.units ?? 0), 0);
   const active = today.filter((e) => e.type === 'activity').reduce((s, e) => s + (e.data.minutes ?? 0), 0);
