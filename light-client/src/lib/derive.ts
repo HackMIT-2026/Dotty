@@ -112,16 +112,34 @@ export function eventTitle(e: DotEvent, unit: GlucoseUnit = 'mg/dL'): string {
     case 'task':
       return 'Care-plan task done';
     case 'meal':
-      return `Meal · ${e.data.carbs_g} g carbs`;
+      // the child's app is never sent the grams (server/app/routers/sync.py), so fall back to the food
+      return e.data.carbs_g != null ? `Meal · ${e.data.carbs_g} g carbs` : mealName(e);
     case 'activity':
       return `${e.data.kind ? cap(e.data.kind) : 'Activity'} · ${e.data.minutes} min`;
     case 'bolus':
-      return e.data.units != null ? `Insulin ${e.data.units} u` : 'Medicine taken';
+      return e.data.units != null ? `Rapid insulin ${e.data.units} u${WHY[e.data.reason] ?? ''}` : 'Medicine taken';
     case 'basal':
-      return e.data.units != null ? `Basal ${e.data.units} u` : 'Basal taken';
+      return e.data.units != null ? `Long-acting insulin ${e.data.units} u` : 'Long-acting insulin taken';
     default:
       return 'Pet';
   }
+}
+
+/** Why a bolus was given, when whoever logged it said so. */
+const WHY: Record<string, string> = { meal: ' · for food', correction: ' · correction' };
+
+/**
+ * Today's insulin, kept apart the way a care team reads it: rapid (bolus) for food and corrections,
+ * long-acting (basal) once or twice a day, and the total daily dose. Doses with no units (the child's
+ * "I did my medicine") count as done but add nothing to the numbers.
+ */
+export function insulinToday(events: DotEvent[], now: number) {
+  const today = todaysEvents(events, now);
+  const sum = (type: DotEvent['type']) =>
+    Math.round(today.filter((e) => e.type === type).reduce((s, e) => s + (e.data.units ?? 0), 0) * 10) / 10;
+  const rapid = sum('bolus');
+  const basal = sum('basal');
+  return { rapid, basal, tdd: Math.round((rapid + basal) * 10) / 10, doses: today.filter((e) => e.type === 'bolus').length };
 }
 
 export const EVENT_ICON: Record<DotEvent['type'], { icon: IconName; color: string; tint: string }> = {
@@ -129,9 +147,16 @@ export const EVENT_ICON: Record<DotEvent['type'], { icon: IconName; color: strin
   meal: { icon: 'silverware-fork-knife', color: '#D97706', tint: '#FFF1D6' },
   activity: { icon: 'run', color: '#1F9D74', tint: '#DDF7EC' },
   bolus: { icon: 'needle', color: '#2F80ED', tint: '#E3F1FF' },
-  basal: { icon: 'needle', color: '#5647C9', tint: '#ECE9FD' },
+  basal: { icon: 'needle', color: '#C2255C', tint: '#FBE4EC' },
   pet: { icon: 'paw', color: '#6C5CE7', tint: '#ECE9FD' },
   task: { icon: 'star-four-points', color: '#D69E2E', tint: '#FFF1D6' },
 };
 
 const cap = (s: string) => s.charAt(0).toUpperCase() + s.slice(1);
+
+/** "Pizza slice, Milk" — what a meal was, for screens that don't get the carbs. */
+export function mealName(e: DotEvent): string {
+  const items = (e.data.items ?? []) as { label?: string; name?: string }[];
+  const names = items.map((i) => i.label ?? i.name).filter(Boolean);
+  return names.length ? names.join(', ') : 'Meal';
+}

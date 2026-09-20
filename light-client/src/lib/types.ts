@@ -43,6 +43,8 @@ export interface DotEvent {
   ts: string;
   source: 'manual' | 'parent' | 'simulator' | 'camera';
   data: Record<string, any>;
+  /** Set on the device when the log came too soon to earn Dots (lib/limits.ts). Never uploaded. */
+  noDots?: boolean;
 }
 
 export interface Reminder {
@@ -122,7 +124,19 @@ export interface PetPlanQuest extends CareTask {
   done: boolean;
 }
 
-export type NotificationKind = 'clinician_note' | 'missed_treatment' | 'out_of_range' | 'reward' | 'high_five' | 'care_summary';
+export type NotificationKind =
+  | 'clinician_note'
+  | 'missed_treatment'
+  | 'out_of_range'
+  | 'reward'
+  | 'high_five'
+  | 'care_summary'
+  /** A meal waiting for a grown-up to count the carbs. */
+  | 'food_help'
+  /** Logs that looked spammed and didn't count (server/app/services/integrity.py). */
+  | 'data_check'
+  /** Back to the child: a grown-up sorted their meal out. */
+  | 'help_answered';
 
 export interface AppNotification {
   id: string;

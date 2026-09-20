@@ -8,12 +8,13 @@ import { parseBg, rangeHint, useGlucoseUnit } from '@/lib/units';
 import type { IconName } from './icon';
 import { Button, Chip, Field, Row, Small } from './ui';
 
-type Kind = 'reading' | 'meal' | 'bolus' | 'activity';
+type Kind = 'reading' | 'meal' | 'bolus' | 'basal' | 'activity';
 
 const KINDS: { id: Kind; label: string; icon: IconName; field: string; min: number; max: number }[] = [
   { id: 'reading', label: 'Glucose', icon: 'water', field: 'mg/dL', min: 20, max: 600 },
   { id: 'meal', label: 'Carbs', icon: 'silverware-fork-knife', field: 'grams of carbs', min: 1, max: 300 },
-  { id: 'bolus', label: 'Insulin', icon: 'needle', field: 'units', min: 0.5, max: 100 },
+  { id: 'bolus', label: 'Rapid', icon: 'needle', field: 'units of rapid insulin', min: 0.5, max: 100 },
+  { id: 'basal', label: 'Long-acting', icon: 'needle-off', field: 'units of long-acting insulin', min: 0.5, max: 100 },
   { id: 'activity', label: 'Activity', icon: 'run', field: 'minutes', min: 1, max: 300 },
 ];
 
@@ -39,7 +40,9 @@ export function QuickLog() {
           ? { carbs_g: Math.round(n), items: [] }
           : kind === 'bolus'
             ? { units: n, reason: 'manual' }
-            : { kind: 'activity', minutes: Math.round(n), intensity: 'moderate' };
+            : kind === 'basal'
+              ? { units: n }
+              : { kind: 'activity', minutes: Math.round(n), intensity: 'moderate' };
     await saveLog(kind, data);
     if (useStore.getState().online) pushToast({ kind: 'info', text: 'Logged', sub: `${k.label}: ${value} ${field}` });
     setValue('');

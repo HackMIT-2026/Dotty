@@ -10,7 +10,7 @@ import { PageHeader } from '@/components/page-header';
 import { Body, Button, Card, Chip, H2, ProgressBar, Row, Screen, Small } from '@/components/ui';
 import { C, R, S, font } from '@/constants/theme';
 import { api, errorText } from '@/lib/api';
-import { EVENT_ICON, bgOf, eventTitle, lastReading, ofType, timeInRange, todaysEvents, trend } from '@/lib/derive';
+import { EVENT_ICON, bgOf, eventTitle, insulinToday, lastReading, ofType, timeInRange, todaysEvents, trend } from '@/lib/derive';
 import { useStore } from '@/lib/store';
 import { planToday } from '@/lib/tasks';
 import { syncNow } from '@/lib/sync';
@@ -60,13 +60,15 @@ export default function ParentHome() {
   const since14 = readings.filter((r) => now - new Date(r.ts).getTime() <= 14 * 86_400_000);
   const tir = timeInRange(since14, low, high);
   const carbs = today.filter((e) => e.type === 'meal').reduce((s, e) => s + (e.data.carbs_g ?? 0), 0);
-  const insulin = today.filter((e) => e.type === 'bolus').reduce((s, e) => s + (e.data.units ?? 0), 0);
+  const insulin = insulinToday(events, now);
   const active = today.filter((e) => e.type === 'activity').reduce((s, e) => s + (e.data.minutes ?? 0), 0);
   const checks = today.filter((e) => e.type === 'reading').length;
   const carePlan = planToday(tasks, events, now);
   const latestNote = notifications.find((n) => n.kind === 'clinician_note');
   const recent = [...events].reverse().filter((e) => e.type !== 'pet').slice(0, 8);
-  const markers = events.filter((e) => e.type === 'meal' || e.type === 'activity' || (e.type === 'bolus' && e.data.units != null));
+  const markers = events.filter(
+    (e) => e.type === 'meal' || e.type === 'activity' || ((e.type === 'bolus' || e.type === 'basal') && e.data.units != null),
+  );
 
   if (!family?.child) {
     return (
@@ -139,7 +141,7 @@ export default function ParentHome() {
         <Stat label="In range" value={tir == null ? '–' : `${tir}%`} sub="14 days" />
         <Stat label="Check-ups" value={String(checks)} sub="today" />
         <Stat label="Carbs" value={`${carbs} g`} sub="today" />
-        <Stat label="Insulin" value={`${Math.round(insulin * 10) / 10} u`} sub="today" />
+        <Stat label="Insulin" value={`${insulin.tdd} u`} sub={`${insulin.rapid} rapid · ${insulin.basal} long-acting`} />
         <Stat label="Active" value={`${active} min`} sub="today" />
       </View>
 
