@@ -108,7 +108,7 @@ On a phone with Expo Go, the app talks to the laptop's Wi-Fi address on port 800
 
 The child's app never receives a number of grams. Food is picked as cards or typed in words ("mac and cheese");
 the server turns that into carbs (Claude, falling back to its own food table) and sends the number only to the
-parent and the clinician. When the estimate isn't confident — or the child taps **Ask a grown-up** — the meal
+parent and the clinician. When the estimate isn't confident — or the child taps **Ask a parent** — the meal
 lands in the parent's inbox with a box to set the real number, and the doctor's logbook says where each carb
 count came from. Set `ANTHROPIC_API_KEY` in `server/.env` to use Claude — the model is `claude-haiku-4-5`,
 about $0.0005 an estimate and cached per phrase, and `DOTTY_FOOD_MODEL` switches it (`claude-opus-5` judges

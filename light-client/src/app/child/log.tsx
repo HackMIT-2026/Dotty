@@ -237,7 +237,7 @@ function Eat() {
       <Button title="Eat with Dotty" icon="silverware-fork-knife" size="lg" onPress={save} disabled={count === 0 || !guard.ok} loading={busy} />
       <Pressable onPress={() => setHelp((v) => !v)} disabled={count === 0} style={({ pressed }) => [styles.ask, pressed && { opacity: 0.7 }, count === 0 && { opacity: 0.4 }]}>
         <Icon name={askedFor ? 'account-heart' : 'account-heart-outline'} size={18} color={C.primaryDark} />
-        <Small color={C.primaryDark}>{askedFor ? 'A grown-up will check this one' : 'Not sure? Ask a grown-up'}</Small>
+        <Small color={C.primaryDark}>{askedFor ? 'A parent will check this one' : 'Not sure? Ask a parent'}</Small>
       </Pressable>
     </Card>
   );
@@ -306,7 +306,7 @@ function Medicine() {
   return (
     <Card>
       <H2>Medicine time</H2>
-      <Body color={C.inkSoft}>Did you and your grown-up do your insulin? Tell Dotty!</Body>
+      <Body color={C.inkSoft}>Did you and your parent do your insulin? Tell Dotty!</Body>
       {guard.ok ? null : <Resting message={guard.message!} />}
       <Button title="I did my medicine" icon="water-check" size="lg" variant="mint" onPress={save} loading={busy} disabled={!guard.ok} />
     </Card>

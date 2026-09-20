@@ -202,7 +202,7 @@ def food_help(patient_id: str, event: dict) -> None:
 
 def help_answered(patient_id: str, label: str) -> None:
     """Back to the child, in child words: no grams, just that a grown-up helped."""
-    notify(patient_id, "help_answered", "A grown-up helped Dotty!", f"{label} is all sorted. Thanks for asking!", {})
+    notify(patient_id, "help_answered", "A parent helped Dotty!", f"{label} is all sorted. Thanks for asking!", {})
 
 
 def plan_changed(patient_id: str, clinician_name: str, change: str) -> None:

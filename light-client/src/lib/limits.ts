@@ -43,7 +43,7 @@ const SOON: Record<string, string> = {
 
 const ENOUGH: Record<string, string> = {
   reading: "That's lots of check-ups today! Dotty is happy.",
-  meal: "Dotty is full for today. Tell a grown-up if you're still eating.",
+  meal: "Dotty is full for today. Tell a parent if you're still eating.",
   activity: 'Dotty has played plenty today. Time to rest!',
   bolus: 'All the medicine for today is logged.',
 };
