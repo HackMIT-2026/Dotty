@@ -45,6 +45,22 @@ def _num(v, lo: float, hi: float) -> bool:
     return isinstance(v, (int, float)) and not isinstance(v, bool) and lo <= v <= hi
 
 
+def _check_meal_items(items) -> None:
+    """A meal is a list of food cards and typed words. The grams are added by the server (services/food.py)."""
+    if not isinstance(items, list) or len(items) > 20:
+        raise ValueError("a meal can have up to 20 items")
+    for item in items:
+        if not isinstance(item, dict):
+            raise ValueError("each meal item is an object")
+        food_id, text = item.get("id"), item.get("text")
+        if not (isinstance(food_id, str) and food_id) and not (isinstance(text, str) and text.strip()):
+            raise ValueError("each meal item needs a food id or some text")
+        if isinstance(text, str) and len(text) > 80:
+            raise ValueError("food names are at most 80 characters")
+        if item.get("n") is not None and not _num(item["n"], 1, 20):
+            raise ValueError("each meal item can be counted 1 to 20 times")
+
+
 class EventIn(BaseModel):
     client_id: str = Field(min_length=8, max_length=64)
     type: EventType
@@ -57,8 +73,13 @@ class EventIn(BaseModel):
         d = self.data
         if self.type == "reading" and not _num(d.get("bg_mgdl"), 20, 600):
             raise ValueError("reading needs bg_mgdl between 20 and 600")
-        if self.type == "meal" and not _num(d.get("carbs_g"), 0, 300):
-            raise ValueError("meal needs carbs_g between 0 and 300")
+        if self.type == "meal":
+            if d.get("carbs_g") is not None and not _num(d["carbs_g"], 0, 300):
+                raise ValueError("meal carbs_g must be between 0 and 300")
+            if d.get("items") is not None:
+                _check_meal_items(d["items"])
+            elif d.get("carbs_g") is None:
+                raise ValueError("a meal needs items, or carbs_g when a grown-up counted them")
         if self.type == "activity":
             if not _num(d.get("minutes"), 1, 300):
                 raise ValueError("activity needs minutes between 1 and 300")
@@ -173,6 +194,18 @@ class BuyIn(BaseModel):
 class EquipIn(BaseModel):
     slot: Literal["color", "hat", "accessory", "background"]
     item_id: str | None = None
+
+
+class FoodIn(BaseModel):
+    """What a child typed into the food box. The reply to a child never contains grams."""
+
+    text: str = Field(min_length=1, max_length=80)
+
+
+class MealCarbsIn(BaseModel):
+    """A grown-up setting the carbs for a meal the estimate wasn't sure about."""
+
+    carbs_g: float = Field(ge=0, le=300)
 
 
 class SimIn(BaseModel):
