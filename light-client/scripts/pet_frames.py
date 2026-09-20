@@ -42,24 +42,36 @@ POSES = {
         tail=dict(pivot=(390, 320), boxes=[(385, 300, 540, 493), (225, 432, 385, 493)], r0=40, r1=190, amp=14, feather=26),
         frames=29,  # a bit more in between, for a smoother swing
         mouth=dict(cover=(272, 209, 34, 20), open=(272, 211, 20, 13, 6)),
+        gills=dict(k=0.5,
+                   left=dict(pivot=(162, 145), box=(40, 45, 165, 215), r0=25, r1=100),
+                   right=dict(pivot=(425, 150), box=(418, 85, 520, 262), r0=25, r1=100)),
         marks=[dict(kind='float', delay=0), dict(kind='float', delay=700)],
     ),
     'curious': dict(
         out_width=566,
         tail=dict(pivot=(395, 402), boxes=[(402, 250, 566, 484)], r0=40, r1=140, amp=14),
         mouth=dict(cover=(291, 204, 16, 16), open=(291, 206, 8, 11, 5)),
+        gills=dict(k=0.5,
+                   left=dict(pivot=(130, 165), box=(20, 70, 135, 250), r0=25, r1=105),
+                   right=dict(pivot=(378, 140), box=(365, 30, 470, 200), r0=25, r1=105)),
         marks=[dict(kind='wobble', delay=0)],  # the "?" and its dot are one mark
     ),
     'cheering': dict(
         out_width=660,
         tail=dict(pivot=(760, 720), boxes=[(740, 560, 1174, 976)], r0=90, r1=300, amp=10),
         mouth=dict(stretch=(557, 392, 70, 62, 0.16)),  # already open: it opens wider instead
+        gills=dict(k=0.5,
+                   left=dict(pivot=(365, 250), box=(160, 25, 390, 370), r0=50, r1=210),
+                   right=dict(pivot=(862, 330), box=(840, 150, 1040, 510), r0=50, r1=200)),
         marks=[dict(kind='burst', delay=0), dict(kind='burst', delay=250), dict(kind='burst', delay=500), dict(kind='burst', delay=750)],
     ),
     'sleepy': dict(
         out_width=724,
         tail=dict(pivot=(1050, 920), boxes=[(1190, 590, 1448, 1086), (985, 895, 1448, 1086)], r0=80, r1=450, amp=11),
         mouth=dict(cover=(542, 776, 68, 38), open=(542, 780, 30, 22, 14)),
+        gills=dict(k=0.5,
+                   left=dict(pivot=(285, 580), box=(55, 385, 300, 790), r0=60, r1=230),
+                   right=dict(pivot=(978, 590), box=(955, 440, 1215, 870), r0=60, r1=240)),
         marks=[dict(kind='zzz', delay=0), dict(kind='zzz', delay=450), dict(kind='zzz', delay=900)],
     ),
 }
@@ -242,9 +254,20 @@ def main():
         n_frames = cfg.get('frames', FRAMES)
         angles = np.linspace(-amp, amp, n_frames)
         body_arr = np.pad(np.array(body), ((pad, pad), (pad, pad), (0, 0)))
+        gills = cfg.get('gills')
+        gill_specs = []
+        if gills:
+            for side in ('left', 'right'):
+                g = gills[side]
+                x0, y0, x1, y1 = g['box']
+                gill_specs.append(dict(pivot=(g['pivot'][0] + pad, g['pivot'][1] + pad), boxes=[(x0 + pad, y0 + pad, x1 + pad, y1 + pad)], r0=g['r0'], r1=g['r1'], feather=10))
         if frames_wanted:
             for i, ang in enumerate(angles):
-                save(bend_tail(body_arr, tail, ang), pdir / f'tail-{i}.webp', scale)
+                arr = body_arr
+                # the gills flap gently as the tail swings: mirror images of each other, at a fraction of the tail's angle
+                for spec, sign in zip(gill_specs, (1, -1)):
+                    arr = np.array(bend_tail(arr, spec, sign * gills['k'] * ang))
+                save(bend_tail(arr, tail, ang), pdir / f'tail-{i}.webp', scale)
 
         # mouth patch
         if 'stretch' in cfg['mouth']:
