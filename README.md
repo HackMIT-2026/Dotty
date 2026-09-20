@@ -1,5 +1,9 @@
 # Dotty: Developer Guide
 
+links:
+https://dotty-two.vercel.app/
+https://dotty-cr7h.vercel.app/child
+
 A Tamagotchi-style companion app that turns Type 1 diabetes care into looking after a pet. The clinician sets a daily care plan; the child sees it as Dotty's quests and earns Dots for doing it; the parent sees the medical detail, what was done or missed, and the alerts.
 
 | Folder | What | Stack |
