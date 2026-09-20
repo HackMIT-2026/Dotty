@@ -8,6 +8,15 @@ A Tamagotchi-style companion that turns Type 1 diabetes care into looking after 
 | `light-client/` | Family app (child + parent roles) | Expo / React Native |
 | `heavy-client/` | Clinician portal: care plan, charts, notes | React + Vite + Tailwind |
 
+## Features
+
+- **Child care logging:** Check-up records a glucose reading; Eat uses food cards and portion counts to total carbs; Play records activity duration and intensity; Medicine records that medicine was taken.
+- **Pet rewards and customization:** earn Dots, levels, check-up streaks, and badges such as First Week, Night Owl, Carb Counter, and Sport Star. In the Shop, preview and buy hats, accessories, colors, and backgrounds for the animated Dotty; some items require a badge to unlock.
+- **Parent dashboard:** review glucose trends, daily totals, and recent logs, or log care on the child's behalf. Send a high five to award 5 Dots, up to five times per parent per day. The Inbox collects care alerts and clinician notes, with unread indicators and a mark-all-read action.
+- **Shared glucose units:** parents can choose mg/dL or mmol/L in Settings. The child's app picks up the family preference on sync, and the clinician portal displays the patient's units.
+- **Clinician review and treatment settings:** view 24-hour or 14-day glucose charts, time in range, care-plan completion, and a logbook. Edit carb ratios, correction settings, basal doses, and activity adjustments; parents can read these under Treatment settings. Clinicians can also send and remove notes visible to the parent.
+- **Mobile care reminders:** after notification permission is granted, the child's mobile app schedules daily reminders for timed care-plan tasks using their quest names. These local reminders work offline after scheduling; they are not available in the browser version.
+
 ## Run locally (new computer)
 
 Each computer runs its **own** local MongoDB database. A newly cloned project has no users or data until you run the seed command below, so the demo logins will not work until the API has been seeded.
@@ -108,7 +117,7 @@ On a phone with Expo Go, the app talks to the laptop's Wi-Fi address on port 800
 
 - **Offline:** Settings → Offline mode (or airplane mode on a phone). Logs wait in the outbox and upload when you're back online.
 - **Care plan:** add a task in the portal; the child's app shows it as a quest within 15 seconds, and the parent's Care plan tab lists it with the instructions. Completing the matching log (a check-up, insulin, a meal, activity, or the "Done!" button for free-form tasks) pays the Dots and fills Dotty's Love meter.
-- **Simulator:** `POST /simulator/{patient_id}` with `{"scenario": "high" | "low" | "normal" | "skip_lunch", "speed": 60}` streams fake glucose readings or raises a missed-lunch alert. Get the patient id from `GET /patients` as Dr. Lee.
+- **Simulator:** open a patient in the clinician portal and click **Demo** to run Normal, Going high, Going low, or Missed lunch; click **Stop** to end the simulation. The API is also available: `POST /simulator/{patient_id}` with `{"scenario": "high" | "low" | "normal" | "skip_lunch", "speed": 60}` streams fake glucose readings or raises a missed-lunch alert. Get the patient id from `GET /patients` as Dr. Lee.
 
 ## Tests
 
