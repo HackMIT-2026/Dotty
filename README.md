@@ -12,20 +12,47 @@ The look comes from the design system on the `gloria` branch (Figma tokens: Fred
 24px cards) and Pip, the pet artwork. `light-client/src/constants/theme.ts` and `heavy-client/src/index.css` hold
 the tokens — never type a hex code outside those two files.
 
-## Run it (two terminals)
+## Run locally (new computer)
 
-Needs MongoDB running locally (`brew services start mongodb-community`), Python 3.12+ and Node 22+.
+Each computer runs its **own** local MongoDB database. A newly cloned project has no users or data until you run the seed command below, so the demo logins will not work until the API has been seeded.
+
+Prerequisites: Homebrew, Python 3.12+, and Node 22+.
+
+### 1. Install and start MongoDB (first time only)
+
+On macOS, install MongoDB Community with Homebrew. Newer Homebrew versions require third-party taps to be trusted explicitly:
+
+```bash
+brew tap mongodb/brew
+brew trust mongodb/brew
+brew install mongodb/brew/mongodb-community@8.0
+brew services start mongodb-community@8.0
+```
+
+Check that it is running:
+
+```bash
+mongosh --eval 'db.runCommand({ ping: 1 })'
+```
+
+The command should return `ok: 1`. On later runs, MongoDB normally starts with your computer; if it does not, run `brew services start mongodb-community@8.0` again.
+
+### 2. Start the API and create local demo data
 
 **Terminal 1: API**
 
 ```bash
 cd server
 python3 -m venv .venv && .venv/bin/pip install -r requirements.txt   # first time only
-.venv/bin/python -m scripts.seed          # creates the "dotty" database with demo data (wipes it first)
+.venv/bin/python -m scripts.seed          # first time: creates local "dotty" demo data (wipes it first)
 .venv/bin/uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
 ```
 
 API docs: http://localhost:8000/docs
+
+> `scripts.seed` resets only this computer's local `dotty` database. Re-run it whenever you want a fresh demo dataset.
+
+### 3. Start the clients
 
 **Terminal 2: clinician portal**
 
