@@ -1,0 +1,26 @@
+# One-click deploy of the Dotty API: Render dashboard -> New -> Blueprint -> pick this repo.
+# The clients are static sites on Vercel (see README) and are not part of this blueprint.
+services:
+  - type: web
+    name: dotty-api
+    runtime: python
+    plan: free
+    rootDir: server
+    buildCommand: pip install -r requirements.txt
+    # Render assigns the port; binding 8000 would make the service unreachable.
+    startCommand: uvicorn app.main:app --host 0.0.0.0 --port $PORT
+    healthCheckPath: /health
+    envVars:
+      - key: MONGO_DB
+        value: dotty
+      - key: ALERTS_TICK_SECONDS
+        value: "60"
+      - key: DOTTY_FOOD_MODEL
+        value: claude-haiku-4-5
+      # Secrets: set these in the Render dashboard, never in the repo.
+      - key: MONGO_URI
+        sync: false
+      - key: JWT_SECRET
+        generateValue: true
+      - key: ANTHROPIC_API_KEY
+        sync: false
