@@ -1,8 +1,14 @@
 # Dotty: Developer Guide
 
-links:
-https://dotty-two.vercel.app/
-https://dotty-cr7h.vercel.app/child
+**Demo video:** https://www.youtube.com/watch?v=O1QIK23if88
+
+**Live app:**
+- Clinician portal (Dr. Lee): https://dotty-two.vercel.app/ — sign in with `lee@dotty.demo` / `demo1234`
+- Family app (child + parent): https://dotty-cr7h.vercel.app/child — child: family code `DEMO42`, PIN `1234`; parent: `parent@dotty.demo` / `demo1234`
+
+The family app opens on `/child` above; switch to the parent view by changing the URL to `.../parent`. There's no in-app role switcher — sign in with the child login on one device/browser and the parent login on another (or a separate browser profile) to see both at once.
+
+> The API is hosted on Render's free tier and sleeps after 15 minutes idle. The first request after a while can take ~40s to wake it up — open the clinician portal link a minute before you need it if the app looks stuck on load.
 
 A Tamagotchi-style companion app that turns Type 1 diabetes care into looking after a pet. The clinician sets a daily care plan; the child sees it as Dotty's quests and earns Dots for doing it; the parent sees the medical detail, what was done or missed, and the alerts.
 
