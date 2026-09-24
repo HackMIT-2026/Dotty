@@ -1,7 +1,7 @@
 # Dotty: Developer Guide
 
 **Demo video:** https://www.youtube.com/watch?v=O1QIK23if88
-
+**Plume Link:**https://plume.hackmit.org/project/ajxpf-weloe-ngazg-fnzal
 **Live app:**
 - Clinician portal (Dr. Lee): https://dotty-two.vercel.app/ — sign in with `lee@dotty.demo` / `demo1234`
 - Family app (child + parent): https://dotty-cr7h.vercel.app/child — child: family code `DEMO42`, PIN `1234`; parent: `parent@dotty.demo` / `demo1234`
